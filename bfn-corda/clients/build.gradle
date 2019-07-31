@@ -61,3 +61,6 @@ task runCapeTownCustomerServer(type: JavaExec, dependsOn: assemble) {
     main = 'com.template.webserver.BFNWebApi'
     args '--server.port=10059', '--config.rpc.host=localhost', '--config.rpc.port=10015', '--config.rpc.username=user1', '--config.rpc.password=test'
 }
+task runServers(type: GradleBuild) {
+    tasks = ['runLondonInvestorServer', 'runNewYorkInvestorServer', 'runOneConnectSuppliersServer', 'runCapeTownCustomerServer']
+}
