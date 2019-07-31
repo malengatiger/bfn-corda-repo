@@ -32,35 +32,33 @@ dependencies {
 }
 
 springBoot {
-    mainClassName = "com.template.webserver.BFNWebApi"
+    mainClassName = "com.bfn.webserver.BFNWebApi"
 }
 
 task runTemplateClient(type: JavaExec, dependsOn: assemble) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'com.template.Client'
+    main = 'com.bfn.Client'
     args 'localhost:10006', 'user1', 'test'
 }
 
 task runLondonInvestorServer(type: JavaExec, dependsOn: assemble) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'com.template.webserver.BFNWebApi'
+    main = 'com.bfn.webserver.BFNWebApi'
     args '--server.port=10050', '--config.rpc.host=localhost', '--config.rpc.port=10006', '--config.rpc.username=user1', '--config.rpc.password=test'
 }
 task runNewYorkInvestorServer(type: JavaExec, dependsOn: assemble) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'com.template.webserver.BFNWebApi'
+    main = 'com.bfn.webserver.BFNWebApi'
     args '--server.port=10053', '--config.rpc.host=localhost', '--config.rpc.port=10009', '--config.rpc.username=user1', '--config.rpc.password=test'
 }
 task runOneConnectSuppliersServer(type: JavaExec, dependsOn: assemble) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'com.template.webserver.BFNWebApi'
+    main = 'com.bfn.webserver.BFNWebApi'
     args '--server.port=10056', '--config.rpc.host=localhost', '--config.rpc.port=10012', '--config.rpc.username=user1', '--config.rpc.password=test'
 }
 task runCapeTownCustomerServer(type: JavaExec, dependsOn: assemble) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'com.template.webserver.BFNWebApi'
+    main = 'com.bfn.webserver.BFNWebApi'
     args '--server.port=10059', '--config.rpc.host=localhost', '--config.rpc.port=10015', '--config.rpc.username=user1', '--config.rpc.password=test'
 }
-task runServers(type: GradleBuild) {
-    tasks = ['runLondonInvestorServer', 'runNewYorkInvestorServer', 'runOneConnectSuppliersServer', 'runCapeTownCustomerServer']
-}
+

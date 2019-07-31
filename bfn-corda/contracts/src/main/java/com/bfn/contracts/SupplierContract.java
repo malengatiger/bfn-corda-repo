@@ -1,6 +1,6 @@
-package com.template.contracts;
+package com.bfn.contracts;
 
-import com.template.states.SupplierState;
+import com.bfn.states.SupplierState;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.CommandData;
 import net.corda.core.contracts.Contract;
@@ -16,7 +16,7 @@ import java.util.List;
 // ************
 public class SupplierContract implements Contract {
     // This is used to identify our contract when building a transaction.
-    public static final String ID = "com.template.contracts.SupplierContract";
+    public static final String ID = "com.bfn.contracts.SupplierContract";
 
     // A transaction is valid if the verify() function of the contract of all the transaction's input and output states
     // does not throw an exception.

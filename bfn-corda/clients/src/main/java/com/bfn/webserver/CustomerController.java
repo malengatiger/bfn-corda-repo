@@ -1,4 +1,4 @@
-package com.template.webserver;
+package com.bfn.webserver;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -17,30 +17,30 @@ import java.util.List;
  * Define your API endpoints here.
  */
 @RestController
-@RequestMapping("/supplier") // The paths for HTTP requests are relative to this base path.
-public class SupplierController {
+@RequestMapping("/customer") // The paths for HTTP requests are relative to this base path.
+public class CustomerController {
     private final CordaRPCOps proxy;
-    private final static Logger logger = LoggerFactory.getLogger(SupplierController.class);
+    private final static Logger logger = LoggerFactory.getLogger(CustomerController.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    public SupplierController(NodeRPCConnection rpc) {
+    public CustomerController(NodeRPCConnection rpc) {
         this.proxy = rpc.proxy;
-        logger.info("\uD83C\uDF3A \uD83C\uDF3A \uD83C\uDF3A SupplierController: NodeRPCConnection proxy has been injected: \uD83C\uDF3A " + proxy.nodeInfo().toString());
+        logger.info("\uD83C\uDF3A \uD83C\uDF3A \uD83C\uDF3A CustomerController: NodeRPCConnection proxy has been injected: \uD83C\uDF3A " + proxy.nodeInfo().toString());
     }
 
     @GetMapping(value = "/hello", produces = "text/plain")
     private String hello() {
         logger.info("/ requested. will say hello  \uD83D\uDC9A  \uD83D\uDC9A  \uD83D\uDC9A");
-        return " \uD83E\uDD6C  \uD83E\uDD6C BFNWebApi: SupplierController says  \uD83E\uDD6C HELLO WORLD!  \uD83D\uDC9A  \uD83D\uDC9A";
+        return " \uD83E\uDD6C  \uD83E\uDD6C BFNWebApi: CustomerController says  \uD83E\uDD6C HELLO WORLD!  \uD83D\uDC9A  \uD83D\uDC9A";
     }
     @GetMapping(value = "/ping", produces = "application/json")
     private String ping() {
-        String msg = "\uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A SupplierController:BFN Web API pinged: " + new Date().toString()
+        String msg = "\uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A CustomerController:BFN Web API pinged: " + new Date().toString()
                 + " \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A";
 
         logger.info("\uD83E\uDDA0 \uD83E\uDDA0 \uD83E\uDDA0 " + proxy.getNetworkParameters().toString() + " \uD83E\uDDA0 \uD83E\uDDA0 \uD83E\uDDA0 ");
         PingResult pingResult = new PingResult(msg,proxy.nodeInfo().toString());
-        logger.info("\uD83C\uDF3A SupplierController: node pinged: \uD83C\uDF3A  \uD83E\uDDE9\uD83E\uDDE9\uD83E\uDDE9 : " + proxy.nodeInfo().getLegalIdentities().get(0).getName().toString() + " \uD83E\uDDE9");
+        logger.info("\uD83C\uDF3A CustomerController: node pinged: \uD83C\uDF3A  \uD83E\uDDE9\uD83E\uDDE9\uD83E\uDDE9 : " + proxy.nodeInfo().getLegalIdentities().get(0).getName().toString() + " \uD83E\uDDE9");
 
         List<NodeInfo> nodes = proxy.networkMapSnapshot();
         return GSON.toJson(pingResult);

@@ -1,6 +1,6 @@
-package com.template.contracts;
+package com.bfn.contracts;
 
-import com.template.states.SupplierState;
+import com.bfn.states.SupplierState;
 import net.corda.core.contracts.Contract;
 import net.corda.core.identity.CordaX500Name;
 import net.corda.testing.core.TestIdentity;

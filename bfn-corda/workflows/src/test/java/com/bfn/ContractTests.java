@@ -1,4 +1,4 @@
-package com.template;
+package com.bfn;
 
 import net.corda.testing.node.MockServices;
 import org.junit.Test;
