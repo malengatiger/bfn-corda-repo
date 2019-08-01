@@ -1,12 +1,19 @@
 package com.bfn.states;
 
 import com.bfn.contracts.SupplierContract;
+import com.bfn.schemas.SupplierSchemaV1;
+import com.google.common.collect.ImmutableList;
 import net.corda.core.contracts.BelongsToContract;
 import net.corda.core.contracts.ContractState;
 import net.corda.core.identity.AbstractParty;
 import net.corda.core.identity.Party;
+import net.corda.core.schemas.MappedSchema;
+import net.corda.core.schemas.PersistentState;
+import net.corda.core.schemas.QueryableState;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -14,14 +21,14 @@ import java.util.List;
 // * State *
 // *********
 @BelongsToContract(SupplierContract.class)
-public class SupplierState implements ContractState {
+public class SupplierState implements ContractState, QueryableState {
 
     private String name, email, cellphone, fcmToken;
-    private List<String> sectors;
+    private String sectors;
     private Date dateRegistered;
     private Party party;
 
-    public SupplierState(Party party,  String name, String email, String cellphone, String fcmToken, List<String> sectors) {
+    public SupplierState(Party party,  String name, String email, String cellphone, String fcmToken, String sectors) {
         this.name = name;
         this.email = email;
         this.cellphone = cellphone;
@@ -38,7 +45,7 @@ public class SupplierState implements ContractState {
         return name;
     }
 
-    public List<String> getSectors() {
+    public String getSectors() {
         return sectors;
     }
 
@@ -64,8 +71,25 @@ public class SupplierState implements ContractState {
 
     @Override
     public List<AbstractParty> getParticipants() {
-        List<AbstractParty> list = new ArrayList<>();
 
-        return list;
+        return Arrays.asList(party);
+    }
+
+    @NotNull
+    @Override
+    public PersistentState generateMappedObject(@NotNull MappedSchema schema) {
+        if (schema instanceof SupplierSchemaV1) {
+            return new SupplierSchemaV1.PersistentIOU(
+                    this.name,this.email,
+                    this.cellphone, this.fcmToken,this.sectors, this.dateRegistered);
+        } else {
+            throw new IllegalArgumentException("Object fucked");
+        }
+    }
+
+    @NotNull
+    @Override
+    public Iterable<MappedSchema> supportedSchemas() {
+        return ImmutableList.of(new SupplierSchemaV1());
     }
 }

@@ -14,6 +14,7 @@ import java.util.List;
 // ************
 // * Contract *
 // ************
+@SuppressWarnings("unchecked")
 public class SupplierContract implements Contract {
     // This is used to identify our contract when building a transaction.
     public static final String ID = "com.bfn.contracts.SupplierContract";

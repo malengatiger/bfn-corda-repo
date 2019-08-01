@@ -1,7 +1,10 @@
 package com.bfn.webserver;
 
+import com.bfn.flows.SupplierRegisterFlow;
+import com.bfn.states.SupplierState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import net.corda.core.identity.Party;
 import net.corda.core.messaging.CordaRPCOps;
 import net.corda.core.node.NodeInfo;
 import org.slf4j.Logger;
@@ -33,28 +36,39 @@ public class SupplierController {
         logger.info("/ requested. will say hello  \uD83D\uDC9A  \uD83D\uDC9A  \uD83D\uDC9A");
         return " \uD83E\uDD6C  \uD83E\uDD6C BFNWebApi: SupplierController says  \uD83E\uDD6C HELLO WORLD!  \uD83D\uDC9A  \uD83D\uDC9A";
     }
+
     @GetMapping(value = "/ping", produces = "application/json")
     private String ping() {
         String msg = "\uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A SupplierController:BFN Web API pinged: " + new Date().toString()
                 + " \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A";
 
         logger.info("\uD83E\uDDA0 \uD83E\uDDA0 \uD83E\uDDA0 " + proxy.getNetworkParameters().toString() + " \uD83E\uDDA0 \uD83E\uDDA0 \uD83E\uDDA0 ");
-        PingResult pingResult = new PingResult(msg,proxy.nodeInfo().toString());
+        PingResult pingResult = new PingResult(msg, proxy.nodeInfo().toString());
         logger.info("\uD83C\uDF3A SupplierController: node pinged: \uD83C\uDF3A  \uD83E\uDDE9\uD83E\uDDE9\uD83E\uDDE9 : " + proxy.nodeInfo().getLegalIdentities().get(0).getName().toString() + " \uD83E\uDDE9");
 
         List<NodeInfo> nodes = proxy.networkMapSnapshot();
         return GSON.toJson(pingResult);
     }
+
     @GetMapping(value = "/nodes", produces = "application/json")
     private String listNodes() {
 
+        Party party = proxy.nodeInfo().getLegalIdentities().get(0);
+        logger.info("\uD83E\uDD1F \uD83E\uDD1F party: ".concat(party.toString()));
+        SupplierState state = new SupplierState(party, "SupplierA", "supllier.a@gmail.com", "099 778 5643", "", "");
+        proxy.startTrackedFlowDynamic(SupplierRegisterFlow.class, state);
+        List<String> flows = proxy.registeredFlows();
+        for (String f : flows) {
+            logger.info("\uD83E\uDD4F Flow: ".concat(f));
+        }
+
         List<NodeInfo> nodes = proxy.networkMapSnapshot();
         StringBuilder sb = new StringBuilder();
-        for (NodeInfo info: nodes) {
-            logger.info("\uD83C\uDF3A \uD83C\uDF3A BFN Corda Node: \uD83C\uDF3A " + info.getLegalIdentities().get(0).getName().toString());
+        for (NodeInfo info : nodes) {
+            logger.info("\uD83C\uDF3A \uD83C\uDF3A BFN Corda Supplier Node: \uD83C\uDF3A " + info.getLegalIdentities().get(0).getName().toString());
             sb.append("Node: " + info.getLegalIdentities().get(0).getName().toString()).append("\n");
         }
-        return GSON.toJson(new PingResult("List of Nodes",sb.toString()));
+        return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9AList of Nodes", sb.toString()));
     }
 
     private class PingResult {
