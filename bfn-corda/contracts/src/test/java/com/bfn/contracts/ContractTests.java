@@ -17,7 +17,7 @@ public class ContractTests {
     private final TestIdentity alice = new TestIdentity(new CordaX500Name("OneConnectSuppliers", "Johannesburg","ZA"));
     private final SupplierState supplierState = new SupplierState(alice.getParty(),
             "Alice","aloce@oneconnect.co.za",
-            "099 877 5643","tbd", Arrays.asList("Pharma"));
+            "099 877 5643","tbd", "Pharma, Retail");
     @Test
     public void contractIsSupplierContract() {
 

@@ -53,14 +53,6 @@ public class SupplierController {
     @GetMapping(value = "/nodes", produces = "application/json")
     private String listNodes() {
 
-        Party party = proxy.nodeInfo().getLegalIdentities().get(0);
-        logger.info("\uD83E\uDD1F \uD83E\uDD1F party: ".concat(party.toString()));
-        SupplierState state = new SupplierState(party, "SupplierA", "supllier.a@gmail.com", "099 778 5643", "", "");
-        proxy.startTrackedFlowDynamic(SupplierRegisterFlow.class, state);
-        List<String> flows = proxy.registeredFlows();
-        for (String f : flows) {
-            logger.info("\uD83E\uDD4F Flow: ".concat(f));
-        }
 
         List<NodeInfo> nodes = proxy.networkMapSnapshot();
         StringBuilder sb = new StringBuilder();
@@ -68,7 +60,24 @@ public class SupplierController {
             logger.info("\uD83C\uDF3A \uD83C\uDF3A BFN Corda Supplier Node: \uD83C\uDF3A " + info.getLegalIdentities().get(0).getName().toString());
             sb.append("Node: " + info.getLegalIdentities().get(0).getName().toString()).append("\n");
         }
-        return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9AList of Nodes", sb.toString()));
+        return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A List of Nodes", sb.toString()));
+    }
+    @GetMapping(value = "/startFlow", produces = "application/json")
+    private String startFlow() {
+
+        Party party = proxy.nodeInfo().getLegalIdentities().get(0);
+        logger.info("\uD83E\uDD1F \uD83E\uDD1F party: ".concat(party.toString()).concat(" \uD83C\uDFC0  will start flow ...."));
+        SupplierState state = new SupplierState(party, "SupplierA", "supllier.a@gmail.com", "099 778 5643", "", "");
+
+        proxy.startTrackedFlowDynamic(SupplierRegisterFlow.class, state);
+        logger.info("\uD83C\uDF4F flow should be started ... \uD83C\uDF4F \uD83C\uDF4F any evidence of this?");
+        List<String> flows = proxy.registeredFlows();
+        for (String f : flows) {
+            logger.info("\uD83E\uDD4F Registered Flow: \uD83E\uDD4F \uD83E\uDD4F ".concat(f));
+        }
+
+
+        return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A Flow started ...", " \uD83E\uDD1E \uD83E\uDD1E Do not know if we're good"));
     }
 
     private class PingResult {

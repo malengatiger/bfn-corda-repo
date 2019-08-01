@@ -60,13 +60,14 @@ public class SupplierRegisterFlow extends FlowLogic<SignedTransaction> {
 
     public SupplierRegisterFlow(SupplierState supplierState) {
         this.supplierState = supplierState;
+        logger.info("\n\n\uD83C\uDFC8 \uD83C\uDFC8 SupplierRegisterFlow constructor  \uD83E\uDD66  \uD83E\uDD66  \uD83E\uDD66");
     }
 
     @Suspendable
     @Override
     public SignedTransaction call() throws FlowException {
         // SupplierRegisterFlow flow logic goes here.
-
+        logger.info("\n\n\uD83C\uDFC8 \uD83C\uDFC8 " + "  \uD83E\uDD8B SupplierRegisterFlow: call starting .... \uD83E\uDD8B");
         ServiceHub serviceHub = getServiceHub();
         NodeInfo info = serviceHub.getMyInfo();
         logger.info("\uD83C\uDFC8 \uD83C\uDFC8 NodeInfo: \uD83C\uDFC8 ".concat(info.toString()));
@@ -76,23 +77,22 @@ public class SupplierRegisterFlow extends FlowLogic<SignedTransaction> {
         logger.info("\uD83C\uDFC8 \uD83C\uDFC8 Notary involved: \uD83D\uDC99 " + notary.toString());
 
         List<PublicKey> requiredSigners = ImmutableList.of(getOurIdentity().getOwningKey());
-        TransactionBuilder tb = new TransactionBuilder();
+        TransactionBuilder tb = new TransactionBuilder(notary);
         tb
                 .addOutputState(supplierState, SupplierContract.ID)
-                .addCommand(new SupplierContract.Register(), requiredSigners)
-                .setNotary(notary);
+                .addCommand(new SupplierContract.Register(), requiredSigners);
 
         // Stage 2.
         progressTracker.setCurrentStep(VERIFYING_TRANSACTION);
         // Verify that the transaction is valid.
         tb.verify(getServiceHub());
-        logger.info("\uD83D\uDC9A\uD83D\uDC9A\uD83D\uDC9A Transaction verified");
+        logger.info("\uD83D\uDC9A\uD83D\uDC9A\uD83D\uDC9A Transaction verified with " + tb.outputStates().size() + " output states");
 
         // Stage 3.
         progressTracker.setCurrentStep(SIGNING_TRANSACTION);
         // Sign the transaction.
-        final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(tb);
-        logger.info("Transaction signed  \uD83E\uDDE1  \uD83E\uDDE1  \uD83E\uDDE1");
+        final SignedTransaction partSignedTx = serviceHub.signInitialTransaction(tb);
+        logger.info("SignedTransaction created after serviceHub signInitialTransaction call  \uD83E\uDDE1  \uD83E\uDDE1  \uD83E\uDDE1");
         // Stage 4.
         progressTracker.setCurrentStep(GATHERING_SIGS);
         // Send the state to the counterparty, and receive it back with their signature.
@@ -100,13 +100,19 @@ public class SupplierRegisterFlow extends FlowLogic<SignedTransaction> {
         List<FlowSession> sessions = new ArrayList<>();
         for (NodeInfo nodeInfo: nodes) {
             List<Party> parties = nodeInfo.getLegalIdentities();
+            logger.info("\uD83C\uDF00 This node: \uD83C\uDF38 " + nodeInfo.getLegalIdentities().get(0).getName().toString()
+                    + " \uD83D\uDC7D \uD83D\uDC7D " + parties + " \uD83D\uDC7D \uD83D\uDC7D parties that are legal identities");
             for (Party mParty: parties) {
-                if (mParty.getOwningKey() != party.getOwningKey()) {
-                    FlowSession otherPartySession = initiateFlow(mParty);
-                    sessions.add(otherPartySession);
-                    logger.info("\uD83C\uDF4E \uD83C\uDF4E Flow session with \uD83C\uDF4F " + mParty.getName().toString() + " added \uD83C\uDF4F");
+                if (!mParty.getName().toString().contains("Notary")) {
+                    if (mParty.getOwningKey() != party.getOwningKey()) {
+                        FlowSession otherPartySession = initiateFlow(mParty);
+                        sessions.add(otherPartySession);
+                        logger.info("\uD83C\uDF4E \uD83C\uDF4E Flow session with \uD83C\uDF4F " + mParty.getName().toString() + " added to list \uD83C\uDF4F");
+                    } else {
+                        logger.info("\uD83C\uDF00 This party is myself. No need to create flow session");
+                    }
                 } else {
-                    logger.info("\uD83C\uDF00 This party is myself. No need to create flow session");
+                    logger.info("\uD83C\uDF00 This party is a Notary. No need to create flow session");
                 }
             }
         }
@@ -117,6 +123,7 @@ public class SupplierRegisterFlow extends FlowLogic<SignedTransaction> {
         // Stage 5.
         progressTracker.setCurrentStep(FINALISING_TRANSACTION);
         // Notarise and record the transaction in both parties' vaults.
+        logger.info("\uD83C\uDF00  ☘️☘️ Notarise and record the transaction in ALL ☘️☘️ parties' vaults. \uD83D\uDD96 \uD83D\uDD96 \uD83D\uDD96 Fingers crossed !!! \uD83D\uDD96");
         return subFlow(new FinalityFlow(fullySignedTx, sessions));
 
     }
