@@ -44,21 +44,34 @@ task runTemplateClient(type: JavaExec, dependsOn: assemble) {
 task runLondonInvestorServer(type: JavaExec, dependsOn: assemble) {
     classpath = sourceSets.main.runtimeClasspath
     main = 'com.bfn.webserver.BFNWebApi'
-    args '--server.port=10050', '--config.rpc.host=localhost', '--config.rpc.port=10006', '--config.rpc.username=user1', '--config.rpc.password=test'
+    args '--server.port=10050', '--config.rpc.host=localhost', '--config.rpc.port=10051', '--config.rpc.username=user1', '--config.rpc.password=test'
 }
 task runNewYorkInvestorServer(type: JavaExec, dependsOn: assemble) {
     classpath = sourceSets.main.runtimeClasspath
     main = 'com.bfn.webserver.BFNWebApi'
-    args '--server.port=10053', '--config.rpc.host=localhost', '--config.rpc.port=10009', '--config.rpc.username=user1', '--config.rpc.password=test'
+    args '--server.port=10053', '--config.rpc.host=localhost', '--config.rpc.port=10054', '--config.rpc.username=user1', '--config.rpc.password=test'
 }
-task runOneConnectSuppliersServer(type: JavaExec, dependsOn: assemble) {
-    classpath = sourceSets.main.runtimeClasspath
-    main = 'com.bfn.webserver.BFNWebApi'
-    args '--server.port=10056', '--config.rpc.host=localhost', '--config.rpc.port=10012', '--config.rpc.username=user1', '--config.rpc.password=test'
-}
+
 task runCapeTownCustomerServer(type: JavaExec, dependsOn: assemble) {
     classpath = sourceSets.main.runtimeClasspath
     main = 'com.bfn.webserver.BFNWebApi'
-    args '--server.port=10059', '--config.rpc.host=localhost', '--config.rpc.port=10015', '--config.rpc.username=user1', '--config.rpc.password=test'
+    args '--server.port=10059', '--config.rpc.host=localhost', '--config.rpc.port=10060', '--config.rpc.username=user1', '--config.rpc.password=test'
 }
+task runSandtonInvestorServer(type: JavaExec, dependsOn: assemble) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'com.bfn.webserver.BFNWebApi'
+    args '--server.port=10062', '--config.rpc.host=localhost', '--config.rpc.port=10063', '--config.rpc.username=user1', '--config.rpc.password=test'
+}
+task runParisInvestorServer(type: JavaExec, dependsOn: assemble) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'com.bfn.webserver.BFNWebApi'
+    args '--server.port=10065', '--config.rpc.host=localhost', '--config.rpc.port=10066', '--config.rpc.username=user1', '--config.rpc.password=test'
+}
+task runRegulatorServer(type: JavaExec, dependsOn: assemble) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'com.bfn.webserver.BFNWebApi'
+    args '--server.port=10068', '--config.rpc.host=localhost', '--config.rpc.port=10069', '--config.rpc.username=user1', '--config.rpc.password=test'
+}
+
+
 

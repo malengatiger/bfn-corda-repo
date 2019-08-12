@@ -1,11 +1,10 @@
 package com.bfn.flows;
 
 import co.paralleluniverse.fibers.Suspendable;
-import net.corda.core.flows.FlowException;
-import net.corda.core.flows.FlowLogic;
-import net.corda.core.flows.FlowSession;
-import net.corda.core.flows.InitiatedBy;
+import net.corda.core.crypto.TransactionSignature;
+import net.corda.core.flows.*;
 import net.corda.core.transactions.SignedTransaction;
+import net.corda.core.utilities.ProgressTracker;
 import net.corda.core.utilities.UntrustworthyData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,20 +20,34 @@ public class SupplierRegisterFlowResponder extends FlowLogic<Void> {
 
     public SupplierRegisterFlowResponder(FlowSession counterPartySession) {
         this.counterPartySession = counterPartySession;
+        logger.info("\uD83E\uDD6C \uD83E\uDD6C \uD83E\uDD6C SupplierRegisterFlowResponder constructor ... \uD83E\uDD6C "
+                + counterPartySession.getCounterparty().getName().toString());
     }
+    private static final ProgressTracker.Step RECEIVING_AND_SENDING_DATA = new ProgressTracker.Step("Sending data between parties.");
+    private static final ProgressTracker.Step SIGNING = new ProgressTracker.Step("Responding to CollectSignaturesFlow.");
+    private static final ProgressTracker.Step FINALISATION = new ProgressTracker.Step("Finalising a transaction.");
 
+    private final ProgressTracker progressTracker = new ProgressTracker(
+            RECEIVING_AND_SENDING_DATA,
+            SIGNING,
+            FINALISATION
+    );
     @Suspendable
     @Override
     public Void call() throws FlowException {
         // SupplierRegisterFlowResponder flow logic goes here.
         logger.info("\uD83E\uDD6C \uD83E\uDD6C \uD83E\uDD6C SupplierRegisterFlowResponder starting ... \uD83E\uDD6C ");
-        SignedTransaction data = counterPartySession.receive(SignedTransaction.class).unwrap(it -> {
 
-            return it;
-        });
+        progressTracker.setCurrentStep(RECEIVING_AND_SENDING_DATA);
+        Object obj = counterPartySession.receive(Object.class).unwrap(data -> data);
+        logger.info(obj.toString());
 
-        FlowSession session = initiateFlow(counterPartySession.getCounterparty());
-        session.send("OK");
+        logger.info("\uD83E\uDDE9 \uD83E\uDDE9 \uD83E\uDDE9 verify Transaction from sender ...... ");
+        SignedTransaction verifiedTransaction = subFlow(new ReceiveTransactionFlow(counterPartySession));
+        logger.info("\uD83E\uDDE9 \uD83E\uDDE9 \uD83E\uDDE9 verifiedTransaction: " + verifiedTransaction.getId());
+        logger.info("\uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A \uD83D\uDC99 TransactionSignature: Hopefully, the responder has written to vault. \uD83D\uDD35 \uD83D\uDD35 How to check?");
+        progressTracker.setCurrentStep(FINALISATION);
+        counterPartySession.send(true);
         return null;
     }
 }

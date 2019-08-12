@@ -4,6 +4,7 @@ import com.bfn.flows.SupplierRegisterFlow;
 import com.bfn.states.SupplierState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
 import net.corda.core.messaging.CordaRPCOps;
 import net.corda.core.node.NodeInfo;
@@ -66,10 +67,12 @@ public class SupplierController {
     private String startFlow() {
 
         Party party = proxy.nodeInfo().getLegalIdentities().get(0);
-        logger.info("\uD83E\uDD1F \uD83E\uDD1F party: ".concat(party.toString()).concat(" \uD83C\uDFC0  will start flow ...."));
+        CordaX500Name cordaX500Name = new CordaX500Name("CapeTownCustomer","Cape Town","ZA");
+        Party counterParty = proxy.wellKnownPartyFromX500Name(cordaX500Name);
+        logger.info("\uD83E\uDD1F \uD83E\uDD1F party: ".concat(party.toString()).concat(" \uD83C\uDFC0  will start flow; counterParty: \uD83C\uDF4A " + counterParty.getName().toString() + " \uD83C\uDF4A"));
         SupplierState state = new SupplierState(party, "SupplierA", "supllier.a@gmail.com", "099 778 5643", "", "");
 
-        proxy.startTrackedFlowDynamic(SupplierRegisterFlow.class, state);
+        proxy.startTrackedFlowDynamic(SupplierRegisterFlow.class, state, counterParty);
         logger.info("\uD83C\uDF4F flow should be started ... \uD83C\uDF4F \uD83C\uDF4F any evidence of this?");
         List<String> flows = proxy.registeredFlows();
         for (String f : flows) {

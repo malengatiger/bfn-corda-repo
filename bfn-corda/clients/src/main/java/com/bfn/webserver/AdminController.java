@@ -2,6 +2,7 @@ package com.bfn.webserver;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import net.corda.core.identity.Party;
 import net.corda.core.messaging.CordaRPCOps;
 import net.corda.core.node.NodeInfo;
 import org.slf4j.Logger;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -31,7 +33,7 @@ public class AdminController {
     @GetMapping(value = "/hello", produces = "text/plain")
     private String hello() {
         logger.info("/ requested. will say hello  \uD83D\uDC9A  \uD83D\uDC9A  \uD83D\uDC9A");
-        return " \uD83E\uDD6C  \uD83E\uDD6C BFNWebApi: AdminController says  \uD83E\uDD6C HELLO WORLD!  \uD83D\uDC9A  \uD83D\uDC9A";
+        return "\uD83D\uDC9A  BFNWebApi: AdminController says  \uD83E\uDD6C HELLO WORLD!  \uD83D\uDC9A  \uD83D\uDC9A";
     }
     @GetMapping(value = "/ping", produces = "application/json")
     private String ping() {
@@ -56,6 +58,27 @@ public class AdminController {
         }
         return GSON.toJson(new PingResult("List of Nodes",sb.toString()));
     }
+    @GetMapping(value = "/notaries", produces = "application/json")
+    private List<String> listNotaries() {
+
+        List<Party> notaryIdentities = proxy.notaryIdentities();
+        List<String> list = new ArrayList<>();
+        for (Party info: notaryIdentities) {
+            logger.info(" \uD83D\uDD35  \uD83D\uDD35 BFN Corda Notary: \uD83C\uDF3A " + GSON.toJson(info));
+            list.add(GSON.toJson(info));
+        }
+        return list;
+    }
+    @GetMapping(value = "/flows", produces = "application/json")
+    private List<String> listFlows() {
+
+        List<String> flows = proxy.registeredFlows();
+        for (String info: flows) {
+            logger.info("\uD83E\uDD4F \uD83E\uDD4F BFN Corda RegisteredFlow:  \uD83E\uDD4F" + info);
+        }
+        return flows;
+    }
+
 
     private class PingResult {
         String message;
