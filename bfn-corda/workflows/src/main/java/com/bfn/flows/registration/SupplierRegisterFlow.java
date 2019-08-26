@@ -1,11 +1,10 @@
-package com.bfn.flows;
+package com.bfn.flows.registration;
 
 import co.paralleluniverse.fibers.Suspendable;
 import com.bfn.contracts.SupplierContract;
 import com.bfn.states.SupplierState;
 import com.google.common.collect.ImmutableList;
 import net.corda.core.flows.*;
-import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
 import net.corda.core.node.NodeInfo;
 import net.corda.core.node.ServiceHub;
@@ -16,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.PublicKey;
-import java.util.ArrayList;
 import java.util.List;
 
 // ******************

@@ -1,12 +1,20 @@
 package com.bfn.webserver;
 
-import com.bfn.flows.SupplierRegisterFlow;
+import com.bfn.flows.invoices.AddInvoiceFlow;
+import com.bfn.flows.registration.RequestRegistrationFlow;
+import com.bfn.states.InvoiceState;
 import com.bfn.states.SupplierState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.r3.businessnetworks.membership.flows.bno.RequestMembershipFlowResponder;
+import com.r3.businessnetworks.membership.flows.member.RequestMembershipFlow;
+import com.r3.businessnetworks.membership.states.MembershipState;
+import com.r3.businessnetworks.membership.states.MembershipStatus;
+import net.corda.core.contracts.UniqueIdentifier;
 import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
 import net.corda.core.messaging.CordaRPCOps;
+import net.corda.core.messaging.FlowHandle;
 import net.corda.core.node.NodeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,21 +71,52 @@ public class SupplierController {
         }
         return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A List of Nodes", sb.toString()));
     }
-    @GetMapping(value = "/startFlow", produces = "application/json")
-    private String startFlow() {
+    @GetMapping(value = "/startRegisterFlow", produces = "application/json")
+    private String startRegisterFlow() {
 
         Party party = proxy.nodeInfo().getLegalIdentities().get(0);
-        CordaX500Name cordaX500Name = new CordaX500Name("CapeTownCustomer","Cape Town","ZA");
-        Party counterParty = proxy.wellKnownPartyFromX500Name(cordaX500Name);
-        logger.info("\uD83E\uDD1F \uD83E\uDD1F party: ".concat(party.toString()).concat(" \uD83C\uDFC0  will start flow; counterParty: \uD83C\uDF4A " + counterParty.getName().toString() + " \uD83C\uDF4A"));
-        SupplierState state = new SupplierState(party, "SupplierA", "supllier.a@gmail.com", "099 778 5643", "", "");
+        CordaX500Name cordaX500Name = new CordaX500Name("Sandton","Sandton","ZA");
+        Party bno = proxy.wellKnownPartyFromX500Name(cordaX500Name);
+        logger.info("\uD83E\uDD1F \uD83E\uDD1F party: ".concat(party.toString()).concat(" \uD83C\uDFC0  will start flow; bno: \uD83C\uDF4A " + bno.getName().toString() + " \uD83C\uDF4A"));
+        SupplierState supplierState = new SupplierState(party, "SupplierA", "supllier.a@gmail.com", "099 778 5643", "", "");
 
-        proxy.startTrackedFlowDynamic(SupplierRegisterFlow.class, state, counterParty);
+        MembershipState membershipState = new MembershipState(party,bno, supplierState,
+                new Date().toInstant(),new Date().toInstant(), MembershipStatus.ACTIVE, new UniqueIdentifier());
+        proxy.startTrackedFlowDynamic(RequestMembershipFlow.class, membershipState, bno);
         logger.info("\uD83C\uDF4F flow should be started ... \uD83C\uDF4F \uD83C\uDF4F any evidence of this?");
-        List<String> flows = proxy.registeredFlows();
-        for (String f : flows) {
-            logger.info("\uD83E\uDD4F Registered Flow: \uD83E\uDD4F \uD83E\uDD4F ".concat(f));
+
+
+
+        return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A Flow started ...", " \uD83E\uDD1E \uD83E\uDD1E Do not know if we're good"));
+    }
+    @GetMapping(value = "/startAddInvoiceFlow", produces = "application/json")
+    private String startAddInvoiceFlow() {
+
+        Party party = proxy.nodeInfo().getLegalIdentities().get(0);
+        CordaX500Name cordaX500Name = new CordaX500Name("Sandton","Sandton","ZA");
+        Party bno = proxy.wellKnownPartyFromX500Name(cordaX500Name);
+        CordaX500Name londonName = new CordaX500Name("London","London","GB");
+        Party london = proxy.wellKnownPartyFromX500Name(londonName);
+        logger.info("\uD83E\uDD1F \uD83E\uDD1F London party: ".concat(london.toString()).concat(" \uD83C\uDFC0  will start flow; \uD83E\uDD1F \uD83E\uDD1F BNO: \uD83C\uDF4A " + bno.getName().toString() + " \uD83C\uDF4A"));
+
+        InvoiceState invoiceState = new InvoiceState("Supplier One","PO0889766","invoiceID",
+                null,"Company B","Customer B","wallet","userName",
+                "900822231","Test Description","Reference",true,false,
+                100788.00, 1156770.00,150677.00,null,null);
+        invoiceState.setDateRegistered(new Date());
+        invoiceState.setParty(london);
+
+        logger.info("\uD83C\uDF4F start flow ...");
+        try {
+            FlowHandle handle = proxy.startFlowDynamic(AddInvoiceFlow.class, invoiceState);
+//        proxy.startTrackedFlowDynamic(AddInvoiceFlow.class, invoiceState);
+            boolean isDone = handle.getReturnValue().toCompletableFuture().isDone();
+
+            logger.info("\uD83C\uDF4F flow should be started ... \uD83C\uDF4F \uD83C\uDF4F any evidence of this????  \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  isDone: " + isDone);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
         }
+
 
 
         return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A Flow started ...", " \uD83E\uDD1E \uD83E\uDD1E Do not know if we're good"));

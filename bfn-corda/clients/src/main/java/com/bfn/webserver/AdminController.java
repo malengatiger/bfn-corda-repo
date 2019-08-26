@@ -64,18 +64,23 @@ public class AdminController {
         List<Party> notaryIdentities = proxy.notaryIdentities();
         List<String> list = new ArrayList<>();
         for (Party info: notaryIdentities) {
-            logger.info(" \uD83D\uDD35  \uD83D\uDD35 BFN Corda Notary: \uD83C\uDF3A " + GSON.toJson(info));
-            list.add(GSON.toJson(info));
+            logger.info(" \uD83D\uDD35  \uD83D\uDD35 BFN Corda Notary: \uD83C\uDF3A " + info.getName().toString());
+            list.add(info.getName().toString());
         }
         return list;
     }
     @GetMapping(value = "/flows", produces = "application/json")
     private List<String> listFlows() {
 
+        logger.info("🥬 🥬 🥬 🥬 Registered Flows on Corda BFN ...  \uD83E\uDD6C ");
         List<String> flows = proxy.registeredFlows();
+        int cnt = 0;
         for (String info: flows) {
-            logger.info("\uD83E\uDD4F \uD83E\uDD4F BFN Corda RegisteredFlow:  \uD83E\uDD4F" + info);
+            cnt++;
+            logger.info("\uD83E\uDD4F \uD83E\uDD4F #$"+cnt+" \uD83E\uDD6C BFN Corda RegisteredFlow:  \uD83E\uDD4F" + info + "   \uD83C\uDF4E ");
         }
+
+        logger.info("🥬 🥬 🥬 🥬 Total Registered Flows  \uD83C\uDF4E  " + cnt + "  \uD83C\uDF4E \uD83E\uDD6C ");
         return flows;
     }
 

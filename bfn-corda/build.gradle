@@ -10,6 +10,8 @@ buildscript {
         slf4j_version = '1.7.25'
         log4j_version = '2.11.2'
         corda_platform_version = '4'
+        corbeans_version = '0.26'
+        corda_solutions_version = '2.0'
     }
 
     repositories {
@@ -91,6 +93,11 @@ dependencies {
     cordaCompile "org.apache.logging.log4j:log4j-web:${log4j_version}"
     cordaCompile "org.slf4j:jul-to-slf4j:$slf4j_version"
 
+
+//    // Optional: control the BNMS dependency versions
+    compile "com.r3.businessnetworks:membership-service:$corda_solutions_version"
+    compile "com.r3.businessnetworks:membership-service-contracts-and-states:$corda_solutions_version"
+
 }
 
 task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
@@ -113,16 +120,16 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         }
     }
 
-    node {
-        name "O=NewYork,L=New York,C=US"
-        p2pPort 10006
-        rpcSettings {
-            address("localhost:10054")
-            adminAddress("localhost:10084")
-        }
-        rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
-        
-    }
+//    node {
+//        name "O=NewYork,L=New York,C=US"
+//        p2pPort 10006
+//        rpcSettings {
+//            address("localhost:10054")
+//            adminAddress("localhost:10084")
+//        }
+//        rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
+//
+//    }
     node {
         name "O=London,L=London,C=GB"
         p2pPort 10010
@@ -133,16 +140,16 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
 
     }
-    node {
-        name "O=Paris,L=Paris,C=FR"
-        p2pPort 10014
-        rpcSettings {
-            address("localhost:10066")
-            adminAddress("localhost:10072")
-        }
-        rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
-
-    }
+//    node {
+//        name "O=Paris,L=Paris,C=FR"
+//        p2pPort 10014
+//        rpcSettings {
+//            address("localhost:10066")
+//            adminAddress("localhost:10072")
+//        }
+//        rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
+//
+//    }
     node {
         name "O=Sandton,L=Sandton,C=ZA"
         p2pPort 10018
@@ -153,27 +160,27 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
         rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
 
     }
-    node {
-        name "O=CapeTown,L=Cape Town,C=ZA"
-        p2pPort 10022
-        rpcSettings {
-            address("localhost:10060")
-            adminAddress("localhost:10074")
-        }
-        rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
-
-    }
-
-    node {
-        name "O=RegulatorZA,L=Johannesburg,C=ZA"
-        p2pPort 10030
-        rpcSettings {
-            address("localhost:10069")
-            adminAddress("localhost:10076")
-        }
-        rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
-
-    }
+//    node {
+//        name "O=CapeTown,L=Cape Town,C=ZA"
+//        p2pPort 10022
+//        rpcSettings {
+//            address("localhost:10060")
+//            adminAddress("localhost:10074")
+//        }
+//        rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
+//
+//    }
+//
+//    node {
+//        name "O=RegulatorZA,L=Johannesburg,C=ZA"
+//        p2pPort 10030
+//        rpcSettings {
+//            address("localhost:10069")
+//            adminAddress("localhost:10076")
+//        }
+//        rpcUsers = [[ user: "user1", "password": "test", "permissions": ["ALL"]]]
+//
+//    }
 
 
 }

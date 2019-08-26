@@ -1,11 +1,10 @@
 package com.bfn.flows;
 
 import co.paralleluniverse.fibers.Suspendable;
-import net.corda.core.crypto.TransactionSignature;
+import com.bfn.flows.registration.SupplierRegisterFlow;
 import net.corda.core.flows.*;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.utilities.ProgressTracker;
-import net.corda.core.utilities.UntrustworthyData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

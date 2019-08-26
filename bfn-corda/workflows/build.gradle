@@ -49,6 +49,14 @@ dependencies {
 
     // CorDapp dependencies.
     cordapp project(":contracts")
+    cordapp "com.r3.businessnetworks:membership-service:$corda_solutions_version"
+    cordapp "com.r3.businessnetworks:membership-service-contracts-and-states:$corda_solutions_version"
+
+
+//    // Optional: control the BNMS dependency versions
+    compile "com.r3.businessnetworks:membership-service:$corda_solutions_version"
+    compile "com.r3.businessnetworks:membership-service-contracts-and-states:$corda_solutions_version"
+
 }
 
 task integrationTest(type: Test, dependsOn: []) {

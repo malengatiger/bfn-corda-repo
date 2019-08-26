@@ -13,7 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * An IOUState schema.
+ * An SupplierSchema schema.
  */
 public class SupplierSchemaV1 extends MappedSchema {
     public SupplierSchemaV1() {
