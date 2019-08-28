@@ -3,24 +3,18 @@ package com.bfn.flows.invoices;
 import co.paralleluniverse.fibers.Suspendable;
 import com.bfn.contracts.InvoiceContract;
 import com.bfn.states.InvoiceState;
-import com.bfn.states.OfferState;
 import com.google.common.collect.ImmutableList;
-import com.r3.businessnetworks.membership.flows.ConfigUtils;
-import com.r3.businessnetworks.membership.flows.member.RequestMembershipFlow;
-import com.r3.businessnetworks.membership.states.SimpleMembershipMetadata;
-import net.corda.core.contracts.Command;
 import net.corda.core.flows.*;
 import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
 import net.corda.core.node.ServiceHub;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
-import net.corda.core.utilities.UntrustworthyData;
+import net.corda.core.utilities.ProgressTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -29,14 +23,65 @@ import java.util.List;
 public class AddInvoiceFlow extends FlowLogic<SignedTransaction> {
     private final static Logger logger = LoggerFactory.getLogger(AddInvoiceFlow.class);
 
-    final InvoiceState invoiceState;
+    final String purchaseOrder;
+    final String invoiceId;
+    final String customer, supplier;
+    final String wallet;
+    final String user;
+    final String invoiceNumber;
+    final String description;
+    final String reference;
+    final double amount, vat, totalAmount;
+    private final ProgressTracker.Step SENDING_TRANSACTION = new ProgressTracker.Step("Sending transaction to counterParty");
+    private final ProgressTracker.Step GENERATING_TRANSACTION = new ProgressTracker.Step("Generating transaction based on new IOU.");
+    private final ProgressTracker.Step VERIFYING_TRANSACTION = new ProgressTracker.Step("Verifying contract constraints.");
+    private final ProgressTracker.Step SIGNING_TRANSACTION = new ProgressTracker.Step("Signing transaction with our private key.");
+    private final ProgressTracker.Step GATHERING_SIGS = new ProgressTracker.Step("Gathering the counterparty's signature.") {
+        @Override
+        public ProgressTracker childProgressTracker() {
+            logger.info("\uD83C\uDF3A \uD83C\uDF3A ProgressTracker childProgressTracker ...");
+            return CollectSignaturesFlow.Companion.tracker();
+        }
+    };
+    private final ProgressTracker.Step FINALISING_TRANSACTION = new ProgressTracker.Step("Obtaining notary signature and recording transaction.") {
+        @Override
+        public ProgressTracker childProgressTracker() {
+            return FinalityFlow.Companion.tracker();
+        }
+    };
 
+    // The progress tracker checkpoints each stage of the flow and outputs the specified messages when each
+    // checkpoint is reached in the code. See the 'progressTracker.currentStep' expressions within the call()
+    // function.
+    private final ProgressTracker progressTracker = new ProgressTracker(
+            GENERATING_TRANSACTION,
+            VERIFYING_TRANSACTION,
+            SIGNING_TRANSACTION,
+            GATHERING_SIGS,
+            FINALISING_TRANSACTION,
+            SENDING_TRANSACTION
+    );
 
-    public AddInvoiceFlow(InvoiceState invoiceState) {
-        this.invoiceState = invoiceState;
-        logger.info(" \uD83C\uDFC0  \uD83C\uDFC0  \uD83C\uDFC0 AddInvoiceFlow constructor - invoiceState: "
-                .concat(invoiceState.getInvoiceNumber()
-                .concat(" ") + invoiceState.getTotalAmount()));
+    @Override
+    public ProgressTracker getProgressTracker() {
+        return progressTracker;
+    }
+
+    public AddInvoiceFlow(String purchaseOrder, String invoiceId, String customer, String supplier, String wallet,
+                          String user, String invoiceNumber, String description, String reference,
+                          double amount, double vat, double totalAmount) {
+        this.purchaseOrder = purchaseOrder;
+        this.invoiceId = invoiceId;
+        this.customer = customer;
+        this.supplier = supplier;
+        this.wallet = wallet;
+        this.user = user;
+        this.invoiceNumber = invoiceNumber;
+        this.description = description;
+        this.reference = reference;
+        this.totalAmount = totalAmount;
+        this.vat = vat;
+        this.amount = amount;
     }
 
     @Override
@@ -46,40 +91,44 @@ public class AddInvoiceFlow extends FlowLogic<SignedTransaction> {
         final ServiceHub serviceHub = getServiceHub();
         logger.info(" \uD83E\uDD1F \uD83E\uDD1F  \uD83E\uDD1F \uD83E\uDD1F  ... AddInvoiceFlow call started ...");
         Party notary = serviceHub.getNetworkMapCache().getNotaryIdentities().get(0);
-        //Party owner = getOurIdentity();
+        //Party supplier = getOurIdentity();
         CordaX500Name name = new CordaX500Name("London","London","GB");
-        Party counterParty = serviceHub.getNetworkMapCache().getNodeByLegalName(name).getLegalIdentities().get(0);
+        Party investor = serviceHub.getNetworkMapCache().getNodeByLegalName(name).getLegalIdentities().get(0);
         CordaX500Name name2 = new CordaX500Name("Sandton","Sandton","ZA");
-        Party owner = serviceHub.getNetworkMapCache().getNodeByLegalName(name2).getLegalIdentities().get(0);
-        invoiceState.setParty(owner);
+        Party supplier = serviceHub.getNetworkMapCache().getNodeByLegalName(name2).getLegalIdentities().get(0);
+        InvoiceState invoiceState = new InvoiceState(purchaseOrder,invoiceId,"del","company?",
+                customer,wallet,user,invoiceNumber,description,reference,true,false,
+                100000.00,115000.00,15.0,new Date(),supplier,investor);
         invoiceState.setDateRegistered(new Date());
+
         InvoiceContract.Register command = new InvoiceContract.Register();
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Notary: " + notary.getName().toString()
-                + "  \uD83C\uDF4A invoice party: " + owner.getName().toString() + " counterParty: " + counterParty.getName().toString() + "  \uD83C\uDF4A invoice: "
+                + "  \uD83C\uDF4A supplier: " + supplier.getName().toString() + " investor: " + investor.getName().toString() + "  \uD83C\uDF4A invoice: "
                 + invoiceState.getInvoiceNumber().concat("  \uD83D\uDC9A totalAmount") + invoiceState.getTotalAmount());
 
-        // We create a transaction builder and add the components.
+        progressTracker.setCurrentStep(GENERATING_TRANSACTION);
         TransactionBuilder txBuilder = new TransactionBuilder(notary)
                 .addOutputState(invoiceState, InvoiceContract.ID)
-                .addCommand(command, owner.getOwningKey());
+                .addCommand(command, supplier.getOwningKey(), investor.getOwningKey());
 
+        progressTracker.setCurrentStep(VERIFYING_TRANSACTION);
         txBuilder.verify(serviceHub);
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Invoice Register Transaction verified");
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Invoice Register TransactionBuilder verified");
         // Signing the transaction.
+        progressTracker.setCurrentStep(SIGNING_TRANSACTION);
         SignedTransaction signedTx = serviceHub.signInitialTransaction(txBuilder);
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Invoice Register Transaction signed");
-        FlowSession flowSession = initiateFlow(owner);
-        FlowSession counterPartyFlowSession = initiateFlow(counterParty);
-        counterPartyFlowSession.send(invoiceState);
-        UntrustworthyData<OfferState> packet1 = counterPartyFlowSession.receive(OfferState.class);
-        OfferState offerState = packet1.unwrap(data -> {
-            logger.info(data.toString());
-            return data;
-        });
-        if (offerState != null) {
-            logger.info("\uD83E\uDD1F \uD83E\uDD1F \uD83E\uDD1F Received OfferState from counterParty \uD83C\uDF45 \uD83C\uDF45 " + offerState.toString());
-        }
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Invoice Register Transaction signInitialTransaction executed ...");
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Transaction signInitialTransaction: ".concat(signedTx.toString()));
 
-        return null;
+        FlowSession investorFlowSession = initiateFlow(investor);
+
+        progressTracker.setCurrentStep(GATHERING_SIGS);
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Collecting Signatures ....");
+        SignedTransaction signedTransaction = subFlow(new CollectSignaturesFlow(signedTx, ImmutableList.of(investorFlowSession), GATHERING_SIGS.childProgressTracker()));
+        logger.info("\uD83C\uDFBD \uD83C\uDFBD \uD83C\uDFBD \uD83C\uDFBD  Signatures collected OK!  \uD83D\uDE21 \uD83D\uDE21 will call FinalityFlow ... \uD83C\uDF3A \uD83C\uDF3A  \uD83C\uDF3A \uD83C\uDF3A : ".concat(signedTransaction.toString()));
+
+        SignedTransaction mSignedTransactionDone = subFlow(new FinalityFlow(signedTransaction, ImmutableList.of(investorFlowSession), FINALISING_TRANSACTION.childProgressTracker()));
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 FinalityFlow has been executed ... \uD83E\uDD66  are we good? \uD83E\uDD66 ❄️ ❄️ ❄️");
+        return mSignedTransactionDone;
     }
 }

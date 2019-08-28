@@ -27,7 +27,7 @@ public class InvoiceContract implements Contract {
     @Override
     public void verify(LedgerTransaction tx) throws IllegalArgumentException{
 
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 InvoiceContract: verify starting .....\uD83E\uDD1F \uD83E\uDD1F ");
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 InvoiceContract: verify starting ..... \uD83E\uDD6C \uD83E\uDD6C ");
         if (tx.getInputStates().size() != 0) {
             throw new IllegalArgumentException("Input states must be zero");
         }
@@ -51,7 +51,7 @@ public class InvoiceContract implements Contract {
         if (invoiceState.getSupplier() == null) {
             throw new IllegalArgumentException("Supplier name is required");
         }
-        Party party = invoiceState.getParty();
+        Party party = invoiceState.getSupplier();
         PublicKey key = party.getOwningKey();
         if (!requiredSigners.contains(key)) {
             throw new IllegalArgumentException("Supplier Party must sign");

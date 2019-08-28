@@ -1,9 +1,6 @@
 package com.bfn.states;
 
 import com.bfn.contracts.InvoiceContract;
-import com.bfn.contracts.SupplierContract;
-import com.bfn.schemas.SupplierSchemaV1;
-import com.google.common.collect.ImmutableList;
 import net.corda.core.contracts.BelongsToContract;
 import net.corda.core.contracts.ContractState;
 import net.corda.core.identity.AbstractParty;
@@ -11,6 +8,7 @@ import net.corda.core.identity.Party;
 import net.corda.core.schemas.MappedSchema;
 import net.corda.core.schemas.PersistentState;
 import net.corda.core.schemas.QueryableState;
+import net.corda.core.serialization.CordaSerializable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -21,27 +19,26 @@ import java.util.List;
 // * State *
 // *********
 @BelongsToContract(InvoiceContract.class)
-public class InvoiceState implements ContractState, QueryableState {
+@CordaSerializable
+public class InvoiceState implements ContractState {
 
-    String supplier,
-            purchaseOrder,
-            invoiceId,
-            deliveryNote,
-            company,
-            customer,
-            wallet,
-            user,
-            invoiceNumber,
-            description,
-            reference;
+    String purchaseOrder;
+    String invoiceId;
+    String deliveryNote;
+    String company;
+    String customer;
+    String wallet;
+    String user;
+    String invoiceNumber;
+    String description;
+    String reference;
 
     boolean isOnOffer, isSettled;
     double amount, totalAmount, valueAddedTax;
     private Date dateRegistered;
-    private Party party;
+    private Party supplier, investor;
 
-    public InvoiceState(String supplier, String purchaseOrder, String invoiceId, String deliveryNote, String company, String customer, String wallet, String user, String invoiceNumber, String description, String reference, boolean isOnOffer, boolean isSettled, double amount, double totalAmount, double valueAddedTax, Date dateRegistered, Party party) {
-        this.supplier = supplier;
+    public InvoiceState(String purchaseOrder, String invoiceId, String deliveryNote, String company, String customer, String wallet, String user, String invoiceNumber, String description, String reference, boolean isOnOffer, boolean isSettled, double amount, double totalAmount, double valueAddedTax, Date dateRegistered, Party supplier, Party investor) {
         this.purchaseOrder = purchaseOrder;
         this.invoiceId = invoiceId;
         this.deliveryNote = deliveryNote;
@@ -58,11 +55,8 @@ public class InvoiceState implements ContractState, QueryableState {
         this.totalAmount = totalAmount;
         this.valueAddedTax = valueAddedTax;
         this.dateRegistered = dateRegistered;
-        this.party = party;
-    }
-
-    public String getSupplier() {
-        return supplier;
+        this.supplier = supplier;
+        this.investor = investor;
     }
 
     public String getPurchaseOrder() {
@@ -129,38 +123,23 @@ public class InvoiceState implements ContractState, QueryableState {
         return dateRegistered;
     }
 
-    public Party getParty() {
-        return party;
+    public Party getSupplier() {
+        return supplier;
     }
 
     public void setDateRegistered(Date dateRegistered) {
         this.dateRegistered = dateRegistered;
     }
 
-    public void setParty(Party party) {
-        this.party = party;
+    public void setSupplier(Party supplier) {
+        this.supplier = supplier;
     }
 
     @Override
     public List<AbstractParty> getParticipants() {
 
-        return Arrays.asList(party);
+        return Arrays.asList(supplier, investor);
     }
 
-    @NotNull
-    @Override
-    public PersistentState generateMappedObject(@NotNull MappedSchema schema) {
-        return null;
-    }
 
-    @NotNull
-    @Override
-    public Iterable<MappedSchema> supportedSchemas() {
-        return null;
-    }
-
-    @Override
-    public String toString() {
-        return "supplier: " + supplier + " customer: " + customer + " amount: " + totalAmount;
-    }
 }

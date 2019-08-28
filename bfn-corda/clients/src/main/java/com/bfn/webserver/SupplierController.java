@@ -1,12 +1,10 @@
 package com.bfn.webserver;
 
 import com.bfn.flows.invoices.AddInvoiceFlow;
-import com.bfn.flows.registration.RequestRegistrationFlow;
 import com.bfn.states.InvoiceState;
 import com.bfn.states.SupplierState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.r3.businessnetworks.membership.flows.bno.RequestMembershipFlowResponder;
 import com.r3.businessnetworks.membership.flows.member.RequestMembershipFlow;
 import com.r3.businessnetworks.membership.states.MembershipState;
 import com.r3.businessnetworks.membership.states.MembershipStatus;
@@ -92,24 +90,20 @@ public class SupplierController {
     @GetMapping(value = "/startAddInvoiceFlow", produces = "application/json")
     private String startAddInvoiceFlow() {
 
-        Party party = proxy.nodeInfo().getLegalIdentities().get(0);
+        //Party investor = proxy.nodeInfo().getLegalIdentities().get(0);
         CordaX500Name cordaX500Name = new CordaX500Name("Sandton","Sandton","ZA");
-        Party bno = proxy.wellKnownPartyFromX500Name(cordaX500Name);
+        Party supplier = proxy.wellKnownPartyFromX500Name(cordaX500Name);
         CordaX500Name londonName = new CordaX500Name("London","London","GB");
-        Party london = proxy.wellKnownPartyFromX500Name(londonName);
-        logger.info("\uD83E\uDD1F \uD83E\uDD1F London party: ".concat(london.toString()).concat(" \uD83C\uDFC0  will start flow; \uD83E\uDD1F \uD83E\uDD1F BNO: \uD83C\uDF4A " + bno.getName().toString() + " \uD83C\uDF4A"));
+        Party investor = proxy.wellKnownPartyFromX500Name(londonName);
+        logger.info("\uD83E\uDD1F \uD83E\uDD1F London investor: ".concat(investor.toString()).concat(" \uD83C\uDFC0  will start flow; \uD83E\uDD1F \uD83E\uDD1F BNO: \uD83C\uDF4A " + supplier.getName().toString() + " \uD83C\uDF4A"));
 
-        InvoiceState invoiceState = new InvoiceState("Supplier One","PO0889766","invoiceID",
-                null,"Company B","Customer B","wallet","userName",
-                "900822231","Test Description","Reference",true,false,
-                100788.00, 1156770.00,150677.00,null,null);
-        invoiceState.setDateRegistered(new Date());
-        invoiceState.setParty(london);
 
-        logger.info("\uD83C\uDF4F start flow ...");
+        logger.info("\uD83C\uDF4F .... start AddInvoiceFlow ...");
         try {
-            FlowHandle handle = proxy.startFlowDynamic(AddInvoiceFlow.class, invoiceState);
-//        proxy.startTrackedFlowDynamic(AddInvoiceFlow.class, invoiceState);
+//
+            FlowHandle handle = proxy.startFlowDynamic(AddInvoiceFlow.class, "PO99800134", "invoiceID_001","Customer S","Supplier A", "walletID_001", "user_001",
+                    "invNum_002","Description here", "Reference Data", 200000.00, 15.0, 230000.00);
+            logger.info("handle: " + handle.getReturnValue().toCompletableFuture().toString());
             boolean isDone = handle.getReturnValue().toCompletableFuture().isDone();
 
             logger.info("\uD83C\uDF4F flow should be started ... \uD83C\uDF4F \uD83C\uDF4F any evidence of this????  \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  isDone: " + isDone);
