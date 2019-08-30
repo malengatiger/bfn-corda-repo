@@ -24,33 +24,25 @@ public class InvoiceState implements ContractState {
 
     String purchaseOrder;
     String invoiceId;
-    String deliveryNote;
-    String company;
-    String customer;
     String wallet;
     String user;
     String invoiceNumber;
     String description;
     String reference;
 
-    boolean isOnOffer, isSettled;
     double amount, totalAmount, valueAddedTax;
     private Date dateRegistered;
-    private Party supplier, investor;
+    private Party supplier, investor, customer;
 
-    public InvoiceState(String purchaseOrder, String invoiceId, String deliveryNote, String company, String customer, String wallet, String user, String invoiceNumber, String description, String reference, boolean isOnOffer, boolean isSettled, double amount, double totalAmount, double valueAddedTax, Date dateRegistered, Party supplier, Party investor) {
+    public InvoiceState(String purchaseOrder, String invoiceId,  String wallet, String user, String invoiceNumber, String description, String reference,  double amount, double totalAmount, double valueAddedTax, Date dateRegistered, Party supplier, Party investor, Party customer) {
         this.purchaseOrder = purchaseOrder;
         this.invoiceId = invoiceId;
-        this.deliveryNote = deliveryNote;
-        this.company = company;
         this.customer = customer;
         this.wallet = wallet;
         this.user = user;
         this.invoiceNumber = invoiceNumber;
         this.description = description;
         this.reference = reference;
-        this.isOnOffer = isOnOffer;
-        this.isSettled = isSettled;
         this.amount = amount;
         this.totalAmount = totalAmount;
         this.valueAddedTax = valueAddedTax;
@@ -67,15 +59,7 @@ public class InvoiceState implements ContractState {
         return invoiceId;
     }
 
-    public String getDeliveryNote() {
-        return deliveryNote;
-    }
-
-    public String getCompany() {
-        return company;
-    }
-
-    public String getCustomer() {
+    public Party getCustomer() {
         return customer;
     }
 
@@ -97,14 +81,6 @@ public class InvoiceState implements ContractState {
 
     public String getReference() {
         return reference;
-    }
-
-    public boolean isOnOffer() {
-        return isOnOffer;
-    }
-
-    public boolean isSettled() {
-        return isSettled;
     }
 
     public double getAmount() {
@@ -131,14 +107,14 @@ public class InvoiceState implements ContractState {
         this.dateRegistered = dateRegistered;
     }
 
-    public void setSupplier(Party supplier) {
-        this.supplier = supplier;
+    public Party getInvestor() {
+        return investor;
     }
 
     @Override
     public List<AbstractParty> getParticipants() {
 
-        return Arrays.asList(supplier, investor);
+        return Arrays.asList(supplier, investor, customer);
     }
 
 

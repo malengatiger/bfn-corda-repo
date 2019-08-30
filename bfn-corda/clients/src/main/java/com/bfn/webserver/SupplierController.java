@@ -8,12 +8,14 @@ import com.google.gson.GsonBuilder;
 import com.r3.businessnetworks.membership.flows.member.RequestMembershipFlow;
 import com.r3.businessnetworks.membership.states.MembershipState;
 import com.r3.businessnetworks.membership.states.MembershipStatus;
+import net.corda.core.concurrent.CordaFuture;
 import net.corda.core.contracts.UniqueIdentifier;
 import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
 import net.corda.core.messaging.CordaRPCOps;
 import net.corda.core.messaging.FlowHandle;
 import net.corda.core.node.NodeInfo;
+import net.corda.core.transactions.SignedTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Define your API endpoints here.
@@ -87,26 +90,21 @@ public class SupplierController {
 
         return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A Flow started ...", " \uD83E\uDD1E \uD83E\uDD1E Do not know if we're good"));
     }
+    Random random = new Random(System.currentTimeMillis());
     @GetMapping(value = "/startAddInvoiceFlow", produces = "application/json")
     private String startAddInvoiceFlow() {
-
-        //Party investor = proxy.nodeInfo().getLegalIdentities().get(0);
-        CordaX500Name cordaX500Name = new CordaX500Name("Sandton","Sandton","ZA");
-        Party supplier = proxy.wellKnownPartyFromX500Name(cordaX500Name);
-        CordaX500Name londonName = new CordaX500Name("London","London","GB");
-        Party investor = proxy.wellKnownPartyFromX500Name(londonName);
-        logger.info("\uD83E\uDD1F \uD83E\uDD1F London investor: ".concat(investor.toString()).concat(" \uD83C\uDFC0  will start flow; \uD83E\uDD1F \uD83E\uDD1F BNO: \uD83C\uDF4A " + supplier.getName().toString() + " \uD83C\uDF4A"));
 
 
         logger.info("\uD83C\uDF4F .... start AddInvoiceFlow ...");
         try {
-//
-            FlowHandle handle = proxy.startFlowDynamic(AddInvoiceFlow.class, "PO99800134", "invoiceID_001","Customer S","Supplier A", "walletID_001", "user_001",
-                    "invNum_002","Description here", "Reference Data", 200000.00, 15.0, 230000.00);
-            logger.info("handle: " + handle.getReturnValue().toCompletableFuture().toString());
-            boolean isDone = handle.getReturnValue().toCompletableFuture().isDone();
+            int num = random.nextInt(100);
 
-            logger.info("\uD83C\uDF4F flow should be started ... \uD83C\uDF4F \uD83C\uDF4F any evidence of this????  \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  isDone: " + isDone);
+
+            CordaFuture<SignedTransaction> signedTransactionCordaFuture   = proxy.startFlowDynamic(AddInvoiceFlow.class, "PO99800134", "invoiceID_001","NewYork@New York@US","Sandton@Sandton@ZA", "London@London@GB","walletID_001", "user_001",
+                    "invNum_002","Description here", "Reference Data", 200000.00 * num, 15.0, 230000.00 * num).getReturnValue();
+            SignedTransaction issueTx = signedTransactionCordaFuture.get();
+
+            logger.info("\uD83C\uDF4F flow should be started ... \uD83C\uDF4F \uD83C\uDF4F any evidence of this????  \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  isDone: " + issueTx.toString());
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
