@@ -1,21 +1,17 @@
 package com.bfn.flows.invoices;
 
 import co.paralleluniverse.fibers.Suspendable;
-import com.bfn.states.InvoiceState;
-import com.bfn.states.OfferState;
-import net.corda.core.contracts.Amount;
 import net.corda.core.flows.*;
 import net.corda.core.identity.Party;
 import net.corda.core.node.ServiceHub;
 import net.corda.core.transactions.SignedTransaction;
-import net.corda.core.utilities.UntrustworthyData;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 
-@InitiatedBy(AddInvoiceFlow.class)
+@InitiatedBy(RegisterInvoiceFlow.class)
 public class AddInvoiceFlowResponder extends FlowLogic<SignedTransaction> {
     private final static Logger logger = LoggerFactory.getLogger(AddInvoiceFlowResponder.class);
     private final FlowSession counterPartySession;

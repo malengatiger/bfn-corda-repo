@@ -1,6 +1,7 @@
 package com.bfn.webserver;
 
-import com.bfn.flows.invoices.AddInvoiceFlow;
+import com.bfn.dto.InvoiceDTO;
+import com.bfn.flows.invoices.RegisterInvoiceFlow;
 import com.bfn.states.InvoiceState;
 import com.bfn.states.SupplierState;
 import com.google.gson.Gson;
@@ -9,22 +10,19 @@ import com.r3.businessnetworks.membership.flows.member.RequestMembershipFlow;
 import com.r3.businessnetworks.membership.states.MembershipState;
 import com.r3.businessnetworks.membership.states.MembershipStatus;
 import net.corda.core.concurrent.CordaFuture;
+import net.corda.core.contracts.StateAndRef;
 import net.corda.core.contracts.UniqueIdentifier;
 import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
 import net.corda.core.messaging.CordaRPCOps;
-import net.corda.core.messaging.FlowHandle;
 import net.corda.core.node.NodeInfo;
 import net.corda.core.transactions.SignedTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Define your API endpoints here.
@@ -72,46 +70,89 @@ public class SupplierController {
         }
         return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A List of Nodes", sb.toString()));
     }
+
     @GetMapping(value = "/startRegisterFlow", produces = "application/json")
     private String startRegisterFlow() {
 
         Party party = proxy.nodeInfo().getLegalIdentities().get(0);
-        CordaX500Name cordaX500Name = new CordaX500Name("Sandton","Sandton","ZA");
+        CordaX500Name cordaX500Name = new CordaX500Name("Sandton", "Sandton", "ZA");
         Party bno = proxy.wellKnownPartyFromX500Name(cordaX500Name);
         logger.info("\uD83E\uDD1F \uD83E\uDD1F party: ".concat(party.toString()).concat(" \uD83C\uDFC0  will start flow; bno: \uD83C\uDF4A " + bno.getName().toString() + " \uD83C\uDF4A"));
         SupplierState supplierState = new SupplierState(party, "SupplierA", "supllier.a@gmail.com", "099 778 5643", "", "");
 
-        MembershipState membershipState = new MembershipState(party,bno, supplierState,
-                new Date().toInstant(),new Date().toInstant(), MembershipStatus.ACTIVE, new UniqueIdentifier());
+        MembershipState membershipState = new MembershipState(party, bno, supplierState,
+                new Date().toInstant(), new Date().toInstant(), MembershipStatus.ACTIVE, new UniqueIdentifier());
         proxy.startTrackedFlowDynamic(RequestMembershipFlow.class, membershipState, bno);
         logger.info("\uD83C\uDF4F flow should be started ... \uD83C\uDF4F \uD83C\uDF4F any evidence of this?");
 
 
-
         return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A Flow started ...", " \uD83E\uDD1E \uD83E\uDD1E Do not know if we're good"));
     }
-    Random random = new Random(System.currentTimeMillis());
-    @GetMapping(value = "/startAddInvoiceFlow", produces = "application/json")
-    private String startAddInvoiceFlow() {
 
+    @PostMapping(value = "getInvoiceStates")
+    public String getInvoiceStates() {
 
-        logger.info("\uD83C\uDF4F .... start AddInvoiceFlow ...");
+        List<StateAndRef<InvoiceState>> states = proxy.vaultQuery(InvoiceState.class).getStates();
+        int cnt = 0;
+        for (StateAndRef<InvoiceState> ref: states) {
+            cnt++;
+            logger.info(" \uD83C\uDF3A InvoiceState: #".concat("" + cnt + " :: ").concat(ref.getState().getData().getSupplier().getName().toString()
+            .concat(" \uD83E\uDD4F total amount: ").concat(ref.getState().getData().getTotalAmount().toString())
+            .concat(" \uD83E\uDD4F ")));
+        }
+        return "\uD83C\uDF3A  \uD83C\uDF3A done listing states: " + states.size();
+    }
+
+    @PostMapping(value = "startRegisterInvoiceFlow")
+    public String startRegisterInvoiceFlow(@RequestBody InvoiceDTO invoice) throws ExecutionException, InterruptedException {
+
+        logger.info("Input Parameters; \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F InvoiceDTO: " + GSON.toJson(invoice) + " \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F");
         try {
-            int num = random.nextInt(100);
+            logger.info("\uD83C\uDF4F ORG: ".concat(invoice.getSupplier().getOrganization()).concat("  \uD83D\uDD06 LOCALITY: ").concat(invoice.getSupplier().getLocality()
+            .concat("  \uD83E\uDDE1 CNTRY: ").concat(invoice.getSupplier().getCountry())));
+            logger.info("\uD83C\uDF4F ORG: ".concat(invoice.getCustomer().getOrganization()).concat("  \uD83D\uDD06 LOCALITY: ").concat(invoice.getCustomer().getLocality()
+                    .concat(" \uD83E\uDDE1 CNTRY: ").concat(invoice.getCustomer().getCountry())));
+
+            String org1 = invoice.getSupplier().getOrganization();
+            String loc1 = invoice.getSupplier().getLocality();
+            String cntry1 = invoice.getSupplier().getCountry();
+            CordaX500Name supplier = new CordaX500Name(org1, loc1, cntry1);
+            Party supplierParty = proxy.wellKnownPartyFromX500Name(supplier);
+            logger.info("\uD83D\uDC4C \uD83D\uDC4C supplierParty: " + supplierParty.getName().toString().concat(" \uD83C\uDF3A \uD83C\uDF3A "));
+
+            String org2 = invoice.getCustomer().getOrganization();
+            String loc2 = invoice.getCustomer().getLocality();
+            String cntry2 = invoice.getCustomer().getCountry();
+            CordaX500Name customer = new CordaX500Name(org2, loc2, cntry2);
+            Party customerParty = proxy.wellKnownPartyFromX500Name(customer);
+            logger.info("\uD83D\uDC4C \uD83D\uDC4C customerParty: " + customerParty.getName().toString().concat(" \uD83C\uDF3A \uD83C\uDF3A "));
 
 
-            CordaFuture<SignedTransaction> signedTransactionCordaFuture   = proxy.startFlowDynamic(AddInvoiceFlow.class, "PO99800134", "invoiceID_001","NewYork@New York@US","Sandton@Sandton@ZA", "London@London@GB","walletID_001", "user_001",
-                    "invNum_002","Description here", "Reference Data", 200000.00 * num, 15.0, 230000.00 * num).getReturnValue();
+            logger.info("we have names and parties \uD83C\uDF4F");
+            InvoiceState invoiceState = new InvoiceState(
+                    invoice.getPurchaseOrder(),
+                    invoice.getInvoiceId(),
+                    invoice.getWallet(),
+                    invoice.getUser(),
+                    invoice.getInvoiceNumber(),
+                    invoice.getDescription(),
+                    invoice.getReference(),
+                    invoice.getAmount(),
+                    invoice.getTotalAmount(),
+                    invoice.getValueAddedTax(), new Date(),
+                    supplierParty, customerParty);
+
+            logger.info("\uD83C\uDF4F ...... start the flow ...");
+            CordaFuture<SignedTransaction> signedTransactionCordaFuture = proxy.startFlowDynamic(
+                    RegisterInvoiceFlow.class, invoiceState).getReturnValue();
+
             SignedTransaction issueTx = signedTransactionCordaFuture.get();
-
-            logger.info("\uD83C\uDF4F flow should be started ... \uD83C\uDF4F \uD83C\uDF4F any evidence of this????  \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  isDone: " + issueTx.toString());
+            logger.info("\uD83C\uDF4F flow completed... \uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  \n\uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C  signedTransaction returned: \uD83E\uDD4F " + issueTx.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
+            return issueTx.getId().toString();
         } catch (Exception e) {
             logger.error(e.getMessage());
+            throw e;
         }
-
-
-
-        return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A Flow started ...", " \uD83E\uDD1E \uD83E\uDD1E Do not know if we're good"));
     }
 
     private class PingResult {

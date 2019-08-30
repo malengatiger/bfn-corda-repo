@@ -30,11 +30,14 @@ public class InvoiceState implements ContractState {
     String description;
     String reference;
 
-    double amount, totalAmount, valueAddedTax;
+    Double amount, totalAmount, valueAddedTax;
     private Date dateRegistered;
-    private Party supplier, investor, customer;
+    private Party supplier, customer;
 
-    public InvoiceState(String purchaseOrder, String invoiceId,  String wallet, String user, String invoiceNumber, String description, String reference,  double amount, double totalAmount, double valueAddedTax, Date dateRegistered, Party supplier, Party investor, Party customer) {
+    public InvoiceState(String purchaseOrder, String invoiceId,  String wallet, String user,
+                        String invoiceNumber, String description, String reference,
+                        Double amount, Double totalAmount, Double valueAddedTax,
+                        Date dateRegistered, Party supplier, Party customer) {
         this.purchaseOrder = purchaseOrder;
         this.invoiceId = invoiceId;
         this.customer = customer;
@@ -48,7 +51,6 @@ public class InvoiceState implements ContractState {
         this.valueAddedTax = valueAddedTax;
         this.dateRegistered = dateRegistered;
         this.supplier = supplier;
-        this.investor = investor;
     }
 
     public String getPurchaseOrder() {
@@ -83,15 +85,15 @@ public class InvoiceState implements ContractState {
         return reference;
     }
 
-    public double getAmount() {
+    public Double getAmount() {
         return amount;
     }
 
-    public double getTotalAmount() {
+    public Double getTotalAmount() {
         return totalAmount;
     }
 
-    public double getValueAddedTax() {
+    public Double getValueAddedTax() {
         return valueAddedTax;
     }
 
@@ -107,14 +109,10 @@ public class InvoiceState implements ContractState {
         this.dateRegistered = dateRegistered;
     }
 
-    public Party getInvestor() {
-        return investor;
-    }
-
     @Override
     public List<AbstractParty> getParticipants() {
 
-        return Arrays.asList(supplier, investor, customer);
+        return Arrays.asList(supplier, customer);
     }
 
 
