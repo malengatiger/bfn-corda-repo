@@ -1,7 +1,6 @@
 package com.bfn;
 
 import com.google.common.collect.ImmutableList;
-import com.bfn.flows.SupplierRegisterFlowResponder;
 import net.corda.testing.node.MockNetwork;
 import net.corda.testing.node.MockNetworkParameters;
 import net.corda.testing.node.StartedMockNode;

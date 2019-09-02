@@ -4,6 +4,7 @@ import com.bfn.dto.InvoiceDTO;
 import com.bfn.flows.invoices.RegisterInvoiceFlow;
 import com.bfn.states.InvoiceState;
 import com.bfn.states.SupplierState;
+import com.bfn.util.Member;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.r3.businessnetworks.membership.flows.member.RequestMembershipFlow;
@@ -71,22 +72,37 @@ public class SupplierController {
         return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A List of Nodes", sb.toString()));
     }
 
-    @GetMapping(value = "/startRegisterFlow", produces = "application/json")
-    private String startRegisterFlow() {
+    @PostMapping(value = "/startMemberRegistrationFlow", produces = "application/json")
+    private String startMemberRegistrationFlow(@RequestBody Member member) throws ExecutionException, InterruptedException {
 
-        Party party = proxy.nodeInfo().getLegalIdentities().get(0);
-        CordaX500Name cordaX500Name = new CordaX500Name("Sandton", "Sandton", "ZA");
-        Party bno = proxy.wellKnownPartyFromX500Name(cordaX500Name);
-        logger.info("\uD83E\uDD1F \uD83E\uDD1F party: ".concat(party.toString()).concat(" \uD83C\uDFC0  will start flow; bno: \uD83C\uDF4A " + bno.getName().toString() + " \uD83C\uDF4A"));
-        SupplierState supplierState = new SupplierState(party, "SupplierA", "supllier.a@gmail.com", "099 778 5643", "", "");
+        try {
+            logger.info(" \uD83C\uDD7F️ \uD83C\uDD7F️ \uD83C\uDD7F️ Member Input Parameters: ".concat(GSON.toJson(member)));
+            Party party = proxy.nodeInfo().getLegalIdentities().get(0);
+            CordaX500Name cordaX500Name = new CordaX500Name("Sandton", "Sandton", "ZA");
+            Party bno = proxy.wellKnownPartyFromX500Name(cordaX500Name);
+            logger.info("\uD83E\uDD1F \uD83E\uDD1F party: ".concat(party.toString()).concat(" \uD83C\uDFC0 \uD83C\uDFC0  bno: \uD83C\uDF4A " + bno.getName().toString() + " \uD83C\uDF4A"));
 
-        MembershipState membershipState = new MembershipState(party, bno, supplierState,
-                new Date().toInstant(), new Date().toInstant(), MembershipStatus.ACTIVE, new UniqueIdentifier());
-        proxy.startTrackedFlowDynamic(RequestMembershipFlow.class, membershipState, bno);
-        logger.info("\uD83C\uDF4F flow should be started ... \uD83C\uDF4F \uD83C\uDF4F any evidence of this?");
+            MembershipState membershipState = new MembershipState(party, bno, member,
+                    new Date().toInstant(), new Date().toInstant(), MembershipStatus.ACTIVE, new UniqueIdentifier());
+            logger.info("\uD83C\uDF4F MemberRegistrationFlow :: \uD83D\uDC99 \uD83D\uDC99 \uD83D\uDC99 membershipState created");
+            CordaFuture<SignedTransaction> signedTransactionCordaFuture = proxy.startFlowDynamic(
+                    RequestMembershipFlow.class, membershipState, bno).getReturnValue();
 
-
-        return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A Flow started ...", " \uD83E\uDD1E \uD83E\uDD1E Do not know if we're good"));
+            logger.info("\uD83C\uDF4F MemberRegistrationFlow started ... \uD83C\uDF4F \uD83C\uDF4F waiting for signedTransaction ....");
+            SignedTransaction issueTx = signedTransactionCordaFuture.get();
+            logger.info("\uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F MemberRegistrationFlow completed... " +
+                    "\uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  \n\uD83D\uDC4C \uD83D\uDC4C " +
+                    "\uD83D\uDC4C \uD83D\uDC4C  signedTransaction returned: \uD83E\uDD4F " +
+                    issueTx.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
+            String publicKey = membershipState.getMember().getOwningKey().toString();
+            logger.info(" \uD83D\uDD11  \uD83D\uDD11  \uD83D\uDD11 Public Key returned: \uD83C\uDF81 "
+                    .concat(publicKey).concat(" \uD83C\uDF81"));
+            return publicKey;
+//            return issueTx.getId().toString();
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            throw e;
+        }
     }
 
     @PostMapping(value = "getInvoiceStates")
@@ -100,7 +116,7 @@ public class SupplierController {
             .concat(" \uD83E\uDD4F total amount: ").concat(ref.getState().getData().getTotalAmount().toString())
             .concat(" \uD83E\uDD4F ")));
         }
-        return "\uD83C\uDF3A  \uD83C\uDF3A done listing states: " + states.size();
+        return "\uD83C\uDF3A  \uD83C\uDF3A done listing states:  \uD83C\uDF3A " + states.size();
     }
 
     @PostMapping(value = "startRegisterInvoiceFlow")
@@ -147,7 +163,7 @@ public class SupplierController {
                     RegisterInvoiceFlow.class, invoiceState).getReturnValue();
 
             SignedTransaction issueTx = signedTransactionCordaFuture.get();
-            logger.info("\uD83C\uDF4F flow completed... \uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  \n\uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C  signedTransaction returned: \uD83E\uDD4F " + issueTx.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
+            logger.info("\uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F flow completed... \uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  \n\uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C  signedTransaction returned: \uD83E\uDD4F " + issueTx.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
             return issueTx.getId().toString();
         } catch (Exception e) {
             logger.error(e.getMessage());

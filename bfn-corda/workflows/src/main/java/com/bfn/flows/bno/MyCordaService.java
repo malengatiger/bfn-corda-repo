@@ -13,6 +13,7 @@ public class MyCordaService extends SingletonSerializeAsToken {
     public MyCordaService(AppServiceHub serviceHub) {
         this.serviceHub = serviceHub;
         logger.info("\uD83D\uDE21 \uD83D\uDE21 \uD83D\uDE21 MyCordaService Constructor. \uD83D\uDCA6 Read up on service usage  \uD83D\uDE21");
+        getInfo();
     }
     // public api of service
     public String getInfo() {
