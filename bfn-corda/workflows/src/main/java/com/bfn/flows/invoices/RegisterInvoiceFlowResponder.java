@@ -12,11 +12,11 @@ import org.slf4j.LoggerFactory;
 import java.util.Date;
 
 @InitiatedBy(RegisterInvoiceFlow.class)
-public class AddInvoiceFlowResponder extends FlowLogic<SignedTransaction> {
-    private final static Logger logger = LoggerFactory.getLogger(AddInvoiceFlowResponder.class);
+public class RegisterInvoiceFlowResponder extends FlowLogic<SignedTransaction> {
+    private final static Logger logger = LoggerFactory.getLogger(RegisterInvoiceFlowResponder.class);
     private final FlowSession counterPartySession;
 
-    public AddInvoiceFlowResponder(FlowSession counterPartySession) {
+    public RegisterInvoiceFlowResponder(FlowSession counterPartySession) {
         this.counterPartySession = counterPartySession;
         logger.info("AddInvoiceFlowResponder Constructor fired: \uD83C\uDF45 \uD83C\uDF45 \uD83C\uDF45");
     }

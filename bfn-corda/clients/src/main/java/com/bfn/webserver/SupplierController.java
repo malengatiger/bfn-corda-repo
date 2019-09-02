@@ -1,12 +1,14 @@
 package com.bfn.webserver;
 
 import com.bfn.dto.InvoiceDTO;
+import com.bfn.flows.bno.RegisterAccountFlow;
 import com.bfn.flows.invoices.RegisterInvoiceFlow;
 import com.bfn.states.InvoiceState;
 import com.bfn.states.SupplierState;
 import com.bfn.util.Member;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.r3.corda.lib.accounts.contracts.states.AccountInfo;
 import net.corda.core.concurrent.CordaFuture;
 import net.corda.core.contracts.StateAndRef;
 import net.corda.core.contracts.UniqueIdentifier;
@@ -67,39 +69,44 @@ public class SupplierController {
         return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A List of Nodes", sb.toString()));
     }
 
-//    @PostMapping(value = "/startMemberRegistrationFlow", produces = "application/json")
-//    private String startMemberRegistrationFlow(@RequestBody Member member) throws ExecutionException, InterruptedException {
-//
-//        try {
-//            logger.info(" \uD83C\uDD7F️ \uD83C\uDD7F️ \uD83C\uDD7F️ Member Input Parameters: ".concat(GSON.toJson(member)));
-//            Party party = proxy.nodeInfo().getLegalIdentities().get(0);
-//            CordaX500Name cordaX500Name = new CordaX500Name("Sandton", "Sandton", "ZA");
-//            Party bno = proxy.wellKnownPartyFromX500Name(cordaX500Name);
-//            logger.info("\uD83E\uDD1F \uD83E\uDD1F party: ".concat(party.toString()).concat(" \uD83C\uDFC0 \uD83C\uDFC0  bno: \uD83C\uDF4A " + bno.getName().toString() + " \uD83C\uDF4A"));
-//
-//            MembershipState membershipState = new MembershipState(party, bno, member,
-//                    new Date().toInstant(), new Date().toInstant(), MembershipStatus.ACTIVE, new UniqueIdentifier());
-//            logger.info("\uD83C\uDF4F MemberRegistrationFlow :: \uD83D\uDC99 \uD83D\uDC99 \uD83D\uDC99 membershipState created");
-//            CordaFuture<SignedTransaction> signedTransactionCordaFuture = proxy.startFlowDynamic(
-//                    RequestMembershipFlow.class, membershipState, bno).getReturnValue();
-//
-//            logger.info("\uD83C\uDF4F MemberRegistrationFlow started ... \uD83C\uDF4F \uD83C\uDF4F waiting for signedTransaction ....");
-//            SignedTransaction issueTx = signedTransactionCordaFuture.get();
-//            logger.info("\uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F MemberRegistrationFlow completed... " +
-//                    "\uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  \n\uD83D\uDC4C \uD83D\uDC4C " +
-//                    "\uD83D\uDC4C \uD83D\uDC4C  signedTransaction returned: \uD83E\uDD4F " +
-//                    issueTx.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
-//            String publicKey = membershipState.getMember().getOwningKey().toString();
-//            logger.info(" \uD83D\uDD11  \uD83D\uDD11  \uD83D\uDD11 Public Key returned: \uD83C\uDF81 "
-//                    .concat(publicKey).concat(" \uD83C\uDF81"));
-//            return publicKey;
-////            return issueTx.getId().toString();
-//        } catch (Exception e) {
-//            logger.error(e.getMessage());
-//            throw e;
-//        }
-//    }
+    @PostMapping(value = "/startAccountRegistrationFlow", produces = "application/json")
+    private String startAccountRegistrationFlow(@RequestParam String accountName) throws ExecutionException, InterruptedException {
 
+        try {
+            logger.info(" \uD83C\uDD7F️ \uD83C\uDD7F️ \uD83C\uDD7F️ startAccountRegistrationFlow: Input Parameters: ".concat(accountName));
+
+            CordaFuture<SignedTransaction> signedTransactionCordaFuture = proxy.startFlowDynamic(
+                    RegisterAccountFlow.class, accountName).getReturnValue();
+
+            logger.info("\uD83C\uDF4F AccountRegistrationFlow started ... \uD83C\uDF4F \uD83C\uDF4F waiting for signedTransaction ....");
+            SignedTransaction issueTx = signedTransactionCordaFuture.get();
+            logger.info("\uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F AccountRegistrationFlow completed... " +
+                    "\uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  \n\uD83D\uDC4C \uD83D\uDC4C " +
+                    "\uD83D\uDC4C \uD83D\uDC4C  signedTransaction returned: \uD83E\uDD4F " +
+                    issueTx.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
+
+            logger.info(" \uD83D\uDD11  \uD83D\uDD11  \uD83D\uDD11 Transaction id returned: \uD83C\uDF81 "
+                    .concat(issueTx.toString()).concat(" \uD83C\uDF81"));
+            return issueTx.getId().toString();
+//            return issueTx.getId().toString();
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            throw e;
+        }
+    }
+
+    @PostMapping(value = "getAccounts")
+    public String getAccounts() {
+
+        List<StateAndRef<AccountInfo>> accounts = proxy.vaultQuery(AccountInfo.class).getStates();
+        int cnt = 0;
+        for (StateAndRef<AccountInfo> ref: accounts) {
+            cnt++;
+            logger.info(" \uD83C\uDF3A AccountInfo: #".concat("" + cnt + " :: ").concat(ref.getState().getData().toString()
+            .concat(" \uD83E\uDD4F ")));
+        }
+        return "\uD83C\uDF3A  \uD83C\uDF3A done listing accounts:  \uD83C\uDF3A " + accounts.size();
+    }
     @PostMapping(value = "getInvoiceStates")
     public String getInvoiceStates() {
 
@@ -108,12 +115,11 @@ public class SupplierController {
         for (StateAndRef<InvoiceState> ref: states) {
             cnt++;
             logger.info(" \uD83C\uDF3A InvoiceState: #".concat("" + cnt + " :: ").concat(ref.getState().getData().getSupplier().getName().toString()
-            .concat(" \uD83E\uDD4F total amount: ").concat(ref.getState().getData().getTotalAmount().toString())
-            .concat(" \uD83E\uDD4F ")));
+                    .concat(" \uD83E\uDD4F total amount: ").concat(ref.getState().getData().getTotalAmount().toString())
+                    .concat(" \uD83E\uDD4F ")));
         }
         return "\uD83C\uDF3A  \uD83C\uDF3A done listing states:  \uD83C\uDF3A " + states.size();
     }
-
     @PostMapping(value = "startRegisterInvoiceFlow")
     public String startRegisterInvoiceFlow(@RequestBody InvoiceDTO invoice) throws Exception {
 
@@ -138,6 +144,12 @@ public class SupplierController {
             Party customerParty = proxy.wellKnownPartyFromX500Name(customer);
             logger.info("\uD83D\uDC4C \uD83D\uDC4C customerParty: " + customerParty.getName().toString().concat(" \uD83C\uDF3A \uD83C\uDF3A "));
 
+            if (supplierParty.getOwningKey() == null) {
+                throw new Exception("Missing or invalid supplier node");
+            }
+            if (customerParty.getOwningKey() == null) {
+                throw new Exception("Missing or invalid customer node");
+            }
 
             logger.info("we have names and parties \uD83C\uDF4F");
             InvoiceState invoiceState = new InvoiceState(
@@ -161,8 +173,11 @@ public class SupplierController {
             logger.info("\uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F flow completed... \uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  \n\uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C  signedTransaction returned: \uD83E\uDD4F " + issueTx.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
             return issueTx.getId().toString();
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            throw new Exception(e.getMessage());
+            if (e.getMessage() != null) {
+                throw new Exception("Failed to register invoice. ".concat(e.getMessage()));
+            } else {
+                throw new Exception("Failed to register invoice. Unknown cause");
+            }
         }
     }
 
