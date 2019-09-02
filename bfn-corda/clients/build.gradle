@@ -19,13 +19,7 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-websocket:$spring_boot_version") {
         exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
     }
-//    // Corbeans starter
-//    compile ("com.github.manosbatsis.corbeans:corbeans-spring-boot-starter:$corbeans_version")
-//    // Corbeans BNMS starter
-//    compile ("com.github.manosbatsis.corbeans:corbeans-spring-boot-bnms-starter:$corbeans_version")
-//    // Optional: control the BNMS dependency versions
-    compile "com.r3.businessnetworks:membership-service:$corda_solutions_version"
-    compile "com.r3.businessnetworks:membership-service-contracts-and-states:$corda_solutions_version"
+
     compile "org.apache.logging.log4j:log4j-slf4j-impl:${log4j_version}"
     compile "org.apache.logging.log4j:log4j-web:${log4j_version}"
     compile "org.slf4j:jul-to-slf4j:$slf4j_version"
@@ -61,7 +55,7 @@ dependencies {
         main = 'com.bfn.webserver.BFNWebApi'
         args '--server.port=10059', '--config.rpc.host=localhost', '--config.rpc.port=10060', '--config.rpc.username=user1', '--config.rpc.password=test'
     }
-    task runSandtonInvestorServer(type: JavaExec, dependsOn: assemble) {
+    task runOCTNetworkOperator(type: JavaExec, dependsOn: assemble) {
         classpath = sourceSets.main.runtimeClasspath
         main = 'com.bfn.webserver.BFNWebApi'
         args '--server.port=10062', '--config.rpc.host=localhost', '--config.rpc.port=10063', '--config.rpc.username=user1', '--config.rpc.password=test'

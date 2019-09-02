@@ -53,7 +53,6 @@ dependencies {
     cordaCompile "$accounts_release_group:accounts-flows:$accounts_release_version"
     cordaCompile "$accounts_release_group:accounts-contracts:$accounts_release_version"
 
-
     // CorDapp dependencies.
     cordapp project(":contracts")
 }
