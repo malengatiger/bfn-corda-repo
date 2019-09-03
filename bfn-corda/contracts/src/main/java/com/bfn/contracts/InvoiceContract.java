@@ -42,19 +42,30 @@ public class InvoiceContract implements Contract {
             throw new IllegalArgumentException("Only Register command allowed");
         }
         List<PublicKey> requiredSigners = command.getSigners();
-
+        logger.info(" \uD83D\uDD34  \uD83D\uDD34 Required signers: " + requiredSigners.size());
+        for (PublicKey key: requiredSigners) {
+            logger.info(" \uD83D\uDD34 publicKey: ".concat(key.toString()));
+        }
         ContractState contractState = tx.getOutput(0);
         if (!(contractState instanceof InvoiceState)) {
             throw new IllegalArgumentException("Output state must be InvoiceState");
         }
         InvoiceState invoiceState = (InvoiceState)contractState;
-        if (invoiceState.getSupplier() == null) {
-            throw new IllegalArgumentException("Supplier name is required");
+        if (invoiceState.getSupplierInfo() == null) {
+            throw new IllegalArgumentException("Supplier is required");
         }
-        Party party = invoiceState.getSupplier();
-        PublicKey key = party.getOwningKey();
-        if (!requiredSigners.contains(key)) {
+        if (invoiceState.getCustomerInfo() == null) {
+            throw new IllegalArgumentException("Customer is required");
+        }
+        Party party = invoiceState.getSupplierInfo().getHost();
+        PublicKey supplierPublicKey = party.getOwningKey();
+        if (!requiredSigners.contains(supplierPublicKey)) {
             throw new IllegalArgumentException("Supplier Party must sign");
+        }
+        Party party2 = invoiceState.getCustomerInfo().getHost();
+        PublicKey customerPublicKey = party2.getOwningKey();
+        if (!requiredSigners.contains(customerPublicKey)) {
+            throw new IllegalArgumentException("Customer Party must sign");
         }
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 InvoiceContract: verification done OK! .....\uD83E\uDD1F \uD83E\uDD1F ");
 

@@ -4,9 +4,7 @@ import co.paralleluniverse.fibers.Suspendable;
 import com.bfn.contracts.InvoiceContract;
 import com.bfn.states.InvoiceState;
 import com.google.common.collect.ImmutableList;
-import com.r3.corda.lib.accounts.workflows.flows.RequestKeyForAccount;
 import net.corda.core.flows.*;
-import net.corda.core.identity.AnonymousParty;
 import net.corda.core.identity.Party;
 import net.corda.core.node.ServiceHub;
 import net.corda.core.transactions.SignedTransaction;
@@ -15,13 +13,12 @@ import net.corda.core.utilities.ProgressTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.PublicKey;
 import java.util.Date;
 
 @InitiatingFlow
 @StartableByRPC
-public class RegisterInvoiceFlow extends FlowLogic<SignedTransaction> {
-    private final static Logger logger = LoggerFactory.getLogger(RegisterInvoiceFlow.class);
+public class OfferInvoiceFlow extends FlowLogic<SignedTransaction> {
+    private final static Logger logger = LoggerFactory.getLogger(OfferInvoiceFlow.class);
 
     final InvoiceState invoiceState;
     private final ProgressTracker.Step SENDING_TRANSACTION = new ProgressTracker.Step("Sending transaction to counterParty");
@@ -59,7 +56,7 @@ public class RegisterInvoiceFlow extends FlowLogic<SignedTransaction> {
         return progressTracker;
     }
 
-    public RegisterInvoiceFlow(InvoiceState invoiceState) {
+    public OfferInvoiceFlow(InvoiceState invoiceState) {
         this.invoiceState = invoiceState;
         logger.info("\uD83C\uDF3A \uD83C\uDF3A RegisterInvoiceFlow constructor with invoiceState: \uD83C\uDF4F " + invoiceState.getSupplierInfo().getName().toString());
     }
@@ -73,22 +70,16 @@ public class RegisterInvoiceFlow extends FlowLogic<SignedTransaction> {
         Party notary = serviceHub.getNetworkMapCache().getNotaryIdentities().get(0);
         invoiceState.setDateRegistered(new Date());
 
-        Party customerParty = invoiceState.getCustomerInfo().getHost();
-        logger.info("\uD83C\uDFC8 \uD83C\uDFC8 customerParty: ".concat(customerParty.toString()));
-
-        Party supplierParty = invoiceState.getSupplierInfo().getHost();
-        logger.info("\uD83C\uDFC8 \uD83C\uDFC8 supplierParty: ".concat(supplierParty.toString()));
-
         InvoiceContract.Register command = new InvoiceContract.Register();
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Notary: " + notary.getName().toString()
-                + "  \uD83C\uDF4A supplierInfo: " + invoiceState.getSupplierInfo().toString()
-                + "  \uD83C\uDF4A customerInfo: " + invoiceState.getCustomerInfo().toString() + " \uD83C\uDF4E  invoice: "
+                + "  \uD83C\uDF4A supplierParty: " + invoiceState.getSupplierInfo().getName().toString()
+                + "  \uD83C\uDF4A customerParty: "+ invoiceState.getCustomerInfo().getName().toString() +" \uD83C\uDF4E  invoice: "
                 + invoiceState.getInvoiceNumber().concat("  \uD83D\uDC9A totalAmount") + invoiceState.getTotalAmount());
 
         progressTracker.setCurrentStep(GENERATING_TRANSACTION);
         TransactionBuilder txBuilder = new TransactionBuilder(notary)
                 .addOutputState(invoiceState, InvoiceContract.ID)
-                .addCommand(command, supplierParty.getOwningKey(), customerParty.getOwningKey());
+                .addCommand(command, invoiceState.getSupplierInfo().getHost().getOwningKey(),  invoiceState.getCustomerInfo().getHost().getOwningKey());
 
         progressTracker.setCurrentStep(VERIFYING_TRANSACTION);
         txBuilder.verify(serviceHub);
@@ -99,26 +90,20 @@ public class RegisterInvoiceFlow extends FlowLogic<SignedTransaction> {
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Invoice Register Transaction signInitialTransaction executed ...");
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Transaction signInitialTransaction: ".concat(signedTx.toString()));
 
-        if (supplierParty.getOwningKey().toString().equalsIgnoreCase(customerParty.getOwningKey().toString())) {
-            SignedTransaction mSignedTransactionDone = subFlow(new FinalityFlow(signedTx, ImmutableList.of(), FINALISING_TRANSACTION.childProgressTracker()));
-            logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 FinalityFlow has been executed ... \uD83E\uDD66  are we good? \uD83E\uDD66 ❄️ ❄️ ❄️");
-            logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 returning mSignedTransactionDone:  ❄️ ❄️ : ".concat(mSignedTransactionDone.toString()));
-            return mSignedTransactionDone;
-        } else {
-            FlowSession customerFlowSession = initiateFlow(customerParty);
-            progressTracker.setCurrentStep(GATHERING_SIGS);
-            logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Collecting Signatures ....");
-            SignedTransaction signedTransaction = subFlow(
-                    new CollectSignaturesFlow(signedTx,
-                            ImmutableList.of(customerFlowSession),
-                            GATHERING_SIGS.childProgressTracker()));
-            logger.info(("\uD83C\uDFBD \uD83C\uDFBD \uD83C\uDFBD \uD83C\uDFBD  Signatures collected OK!  \uD83D\uDE21 \uD83D\uDE21 " +
-                    ".... will call FinalityFlow ... \uD83C\uDF3A \uD83C\uDF3A  \uD83C\uDF3A \uD83C\uDF3A : ").concat(signedTransaction.toString()));
+        FlowSession customerFlowSession = initiateFlow(invoiceState.getCustomerInfo().getHost());
 
-            SignedTransaction mSignedTransactionDone = subFlow(new FinalityFlow(signedTx, ImmutableList.of(), FINALISING_TRANSACTION.childProgressTracker()));
-            logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 FinalityFlow has been executed ... \uD83E\uDD66  are we good? \uD83E\uDD66 ❄️ ❄️ ❄️");
-            logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 returning mSignedTransactionDone:  ❄️ ❄️ : ".concat(mSignedTransactionDone.toString()));
-            return mSignedTransactionDone;
-        }
+        progressTracker.setCurrentStep(GATHERING_SIGS);
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Collecting Signatures ....");
+        SignedTransaction signedTransaction = subFlow(
+                new CollectSignaturesFlow(signedTx,
+                        ImmutableList.of(customerFlowSession),
+                        GATHERING_SIGS.childProgressTracker()));
+        logger.info(("\uD83C\uDFBD \uD83C\uDFBD \uD83C\uDFBD \uD83C\uDFBD  Signatures collected OK!  \uD83D\uDE21 \uD83D\uDE21 " +
+                "will call FinalityFlow ... \uD83C\uDF3A \uD83C\uDF3A  \uD83C\uDF3A \uD83C\uDF3A : ").concat(signedTransaction.toString()));
+
+        SignedTransaction mSignedTransactionDone = subFlow(new FinalityFlow(signedTransaction, ImmutableList.of(customerFlowSession), FINALISING_TRANSACTION.childProgressTracker()));
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 FinalityFlow has been executed ... \uD83E\uDD66  are we good? \uD83E\uDD66 ❄️ ❄️ ❄️");
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 returning mSignedTransactionDone:  ❄️ ❄️ : ".concat(mSignedTransactionDone.toString()));
+        return mSignedTransactionDone;
     }
 }

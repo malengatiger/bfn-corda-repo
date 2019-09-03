@@ -7,11 +7,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class OfferState implements ContractState {
+public class InvoiceOfferState implements ContractState {
     final boolean wantToBuy;
     final double amount;
 
-    public OfferState(boolean wantToBuy, double amount) {
+    public InvoiceOfferState(boolean wantToBuy, double amount) {
         this.wantToBuy = wantToBuy;
         this.amount = amount;
     }

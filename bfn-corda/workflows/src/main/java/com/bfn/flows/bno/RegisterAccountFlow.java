@@ -12,6 +12,7 @@ import com.r3.corda.lib.accounts.contracts.types.AccountStatus;
 import net.corda.core.contracts.UniqueIdentifier;
 import net.corda.core.flows.*;
 import net.corda.core.identity.Party;
+import net.corda.core.identity.PartyAndCertificate;
 import net.corda.core.node.ServiceHub;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
@@ -23,7 +24,7 @@ import java.util.Date;
 
 @InitiatingFlow
 @StartableByRPC
-public class RegisterAccountFlow extends FlowLogic<SignedTransaction> {
+public class RegisterAccountFlow extends FlowLogic<AccountInfo> {
     private final static Logger logger = LoggerFactory.getLogger(RegisterAccountFlow.class);
 
     final String accountName;
@@ -69,7 +70,7 @@ public class RegisterAccountFlow extends FlowLogic<SignedTransaction> {
 
     @Override
     @Suspendable
-    public SignedTransaction call() throws FlowException {
+    public AccountInfo call() throws FlowException {
         final ServiceHub serviceHub = getServiceHub();
         Party bnoParty = serviceHub.getMyInfo().getLegalIdentities().get(0);
         AccountInfo accountInfo = new AccountInfo(accountName, bnoParty,
@@ -82,7 +83,7 @@ public class RegisterAccountFlow extends FlowLogic<SignedTransaction> {
         AccountCommand command = new Create();
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Notary: " + notary.getName().toString()
                 + "  \uD83C\uDF4A accountName: " + accountName
-                + "  \uD83C\uDF4A bnoParty: "+ bnoParty.getName().toString() +" \uD83C\uDF4E ");
+                + "  \uD83C\uDF4A bnoParty: "+ bnoParty.getName().toString() +" \uD83C\uDF4E publicKey: ".concat(bnoParty.getOwningKey().toString()));
 
         progressTracker.setCurrentStep(GENERATING_TRANSACTION);
         TransactionBuilder txBuilder = new TransactionBuilder(notary)
@@ -91,16 +92,21 @@ public class RegisterAccountFlow extends FlowLogic<SignedTransaction> {
 
         progressTracker.setCurrentStep(VERIFYING_TRANSACTION);
         txBuilder.verify(serviceHub);
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Account Register TransactionBuilder verified");
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 RegisterAccountFlow TransactionBuilder verified");
         // Signing the transaction.
         progressTracker.setCurrentStep(SIGNING_TRANSACTION);
         SignedTransaction signedTx = serviceHub.signInitialTransaction(txBuilder);
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Account Register Transaction signInitialTransaction executed ...");
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Transaction signInitialTransaction: ".concat(signedTx.toString()));
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 RegisterAccountFlow signInitialTransaction executed ...");
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 RegisterAccountFlow signInitialTransaction returned: ".concat(signedTx.toString()));
+
+        PartyAndCertificate partyAndCertificate = serviceHub.getKeyManagementService()
+                .freshKeyAndCert(getOurIdentityAndCert(),false,accountInfo.getIdentifier().getId());
+
+        logger.info(" \uD83C\uDF3A  \uD83C\uDF3A  \uD83C\uDF3A returning partyAndCertificate:  \uD83D\uDD11 ".concat(partyAndCertificate.toString()));
 
         SignedTransaction mSignedTransactionDone = subFlow(new FinalityFlow(signedTx, ImmutableList.of(), FINALISING_TRANSACTION.childProgressTracker()));
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 FinalityFlow has been executed ... \uD83E\uDD66  are we good? \uD83E\uDD66 ❄️ ❄️ ❄️");
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 returning mSignedTransactionDone:  ❄️ ❄️ : ".concat(mSignedTransactionDone.toString()));
-        return mSignedTransactionDone;
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 FinalityFlow has been executed ... \uD83E\uDD66  are we good? \uD83E\uDD66 ❄️ ❄️ ❄ trx: ️".concat(mSignedTransactionDone.toString()));
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 returning accountInfo:  ❄️ ❄️ : ".concat(accountInfo.toString()));
+        return accountInfo;
     }
 }

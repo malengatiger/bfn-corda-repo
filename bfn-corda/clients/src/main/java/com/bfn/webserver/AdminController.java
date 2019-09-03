@@ -1,19 +1,24 @@
 package com.bfn.webserver;
 
+import com.bfn.dto.AccountInfoDTO;
+import com.bfn.flows.bno.RegisterAccountFlow;
+import com.bfn.states.InvoiceState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.r3.corda.lib.accounts.contracts.states.AccountInfo;
+import net.corda.core.concurrent.CordaFuture;
+import net.corda.core.contracts.StateAndRef;
 import net.corda.core.identity.Party;
 import net.corda.core.messaging.CordaRPCOps;
 import net.corda.core.node.NodeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Define your API endpoints here.
@@ -28,6 +33,61 @@ public class AdminController {
     public AdminController(NodeRPCConnection rpc) {
         this.proxy = rpc.proxy;
         logger.info("\uD83C\uDF3A \uD83C\uDF3A \uD83C\uDF3A AdminController: NodeRPCConnection proxy has been injected: \uD83C\uDF3A " + proxy.nodeInfo().toString());
+    }
+    @PostMapping(value = "/startAccountRegistrationFlow", produces = "application/json")
+    private AccountInfoDTO startAccountRegistrationFlow(@RequestParam String accountName) throws ExecutionException, InterruptedException {
+
+        try {
+            logger.info("\uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35  startAccountRegistrationFlow: Input Parameters: ".concat(accountName));
+
+            CordaFuture<AccountInfo> accountInfoCordaFuture = proxy.startTrackedFlowDynamic(
+                    RegisterAccountFlow.class, accountName).getReturnValue();
+
+            logger.info("\uD83C\uDF4F AccountRegistrationFlow started ... \uD83C\uDF4F \uD83C\uDF4F waiting for signedTransaction ....");
+            AccountInfo accountInfo = accountInfoCordaFuture.get();
+            logger.info("\uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F AccountRegistrationFlow completed... " +
+                    "\uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  \n\uD83D\uDC4C \uD83D\uDC4C " +
+                    "\uD83D\uDC4C \uD83D\uDC4C  accountInfo returned: \uD83E\uDD4F " +
+                    accountInfo.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
+
+            getAccounts();
+            AccountInfoDTO dto = new AccountInfoDTO();
+            dto.setHost(accountInfo.getHost().toString());
+            dto.setIdentifier(accountInfo.getIdentifier().toString());
+            dto.setName(accountInfo.getName());
+            dto.setStatus(accountInfo.getStatus().name());
+            return dto;
+//
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            throw e;
+        }
+    }
+
+    @PostMapping(value = "getAccounts")
+    public String getAccounts() {
+
+        List<StateAndRef<AccountInfo>> accounts = proxy.vaultQuery(AccountInfo.class).getStates();
+        int cnt = 0;
+        for (StateAndRef<AccountInfo> ref: accounts) {
+            cnt++;
+            logger.info(" \uD83C\uDF3A AccountInfo: #".concat("" + cnt + " :: ").concat(ref.getState().getData().toString()
+                    .concat(" \uD83E\uDD4F ")));
+        }
+        return "\uD83C\uDF3A  \uD83C\uDF3A done listing accounts:  \uD83C\uDF3A " + accounts.size();
+    }
+    @PostMapping(value = "getInvoiceStates")
+    public String getInvoiceStates() {
+
+        List<StateAndRef<InvoiceState>> states = proxy.vaultQuery(InvoiceState.class).getStates();
+        int cnt = 0;
+        for (StateAndRef<InvoiceState> ref: states) {
+            cnt++;
+            logger.info(" \uD83C\uDF3A InvoiceState: #".concat("" + cnt + " :: ").concat(ref.getState().getData().getSupplierInfo().getName().toString()
+                    .concat(" \uD83E\uDD4F total amount: ").concat(ref.getState().getData().getTotalAmount().toString())
+                    .concat(" \uD83E\uDD4F ")));
+        }
+        return "\uD83C\uDF3A  \uD83C\uDF3A done listing states:  \uD83C\uDF3A " + states.size();
     }
 
     @GetMapping(value = "/hello", produces = "text/plain")

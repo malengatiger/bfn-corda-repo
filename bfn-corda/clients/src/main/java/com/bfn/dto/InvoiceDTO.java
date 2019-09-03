@@ -3,45 +3,27 @@ package com.bfn.dto;
 import java.util.Date;
 
 public class InvoiceDTO {
-    String purchaseOrder;
     String invoiceId;
-    String wallet;
-    String user;
     String invoiceNumber;
     String description;
-    String reference;
 
     Double amount, totalAmount, valueAddedTax;
     private Date dateRegistered;
-    private MyCordaName supplier, customer;
+    private String supplierId, customerId;
 
     public InvoiceDTO() {
     }
 
-    public InvoiceDTO(String purchaseOrder, String invoiceId, String wallet, String user, String invoiceNumber,
-                      String description, String reference, Double amount, Double totalAmount, Double valueAddedTax,
-                      Date dateRegistered, MyCordaName supplier, MyCordaName customer) {
-        this.purchaseOrder = purchaseOrder;
+    public InvoiceDTO(String invoiceId, String invoiceNumber, String description, Double amount,
+                      Double totalAmount, Double valueAddedTax, String supplierId, String customerId) {
         this.invoiceId = invoiceId;
-        this.wallet = wallet;
-        this.user = user;
         this.invoiceNumber = invoiceNumber;
         this.description = description;
-        this.reference = reference;
         this.amount = amount;
         this.totalAmount = totalAmount;
         this.valueAddedTax = valueAddedTax;
-        this.dateRegistered = dateRegistered;
-        this.supplier = supplier;
-        this.customer = customer;
-    }
-
-    public String getPurchaseOrder() {
-        return purchaseOrder;
-    }
-
-    public void setPurchaseOrder(String purchaseOrder) {
-        this.purchaseOrder = purchaseOrder;
+        this.supplierId = supplierId;
+        this.customerId = customerId;
     }
 
     public String getInvoiceId() {
@@ -50,22 +32,6 @@ public class InvoiceDTO {
 
     public void setInvoiceId(String invoiceId) {
         this.invoiceId = invoiceId;
-    }
-
-    public String getWallet() {
-        return wallet;
-    }
-
-    public void setWallet(String wallet) {
-        this.wallet = wallet;
-    }
-
-    public String getUser() {
-        return user;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
     }
 
     public String getInvoiceNumber() {
@@ -82,14 +48,6 @@ public class InvoiceDTO {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public String getReference() {
-        return reference;
-    }
-
-    public void setReference(String reference) {
-        this.reference = reference;
     }
 
     public Double getAmount() {
@@ -124,19 +82,19 @@ public class InvoiceDTO {
         this.dateRegistered = dateRegistered;
     }
 
-    public MyCordaName getSupplier() {
-        return supplier;
+    public String getSupplierId() {
+        return supplierId;
     }
 
-    public void setSupplier(MyCordaName supplier) {
-        this.supplier = supplier;
+    public void setSupplierId(String supplierId) {
+        this.supplierId = supplierId;
     }
 
-    public MyCordaName getCustomer() {
-        return customer;
+    public String getCustomerId() {
+        return customerId;
     }
 
-    public void setCustomer(MyCordaName customer) {
-        this.customer = customer;
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
     }
 }
