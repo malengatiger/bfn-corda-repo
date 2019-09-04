@@ -1,9 +1,11 @@
 package com.bfn.flows.invoices;
 
 import co.paralleluniverse.fibers.Suspendable;
-import com.bfn.contracts.InvoiceContract;
+import com.bfn.contracts.InvoiceOfferContract;
+import com.bfn.states.InvoiceOfferState;
 import com.bfn.states.InvoiceState;
 import com.google.common.collect.ImmutableList;
+import net.corda.core.contracts.StateAndRef;
 import net.corda.core.flows.*;
 import net.corda.core.identity.Party;
 import net.corda.core.node.ServiceHub;
@@ -13,19 +15,19 @@ import net.corda.core.utilities.ProgressTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
+import java.util.List;
 
 @InitiatingFlow
 @StartableByRPC
-public class OfferInvoiceFlow extends FlowLogic<SignedTransaction> {
-    private final static Logger logger = LoggerFactory.getLogger(OfferInvoiceFlow.class);
+public class InvoiceOfferFlow extends FlowLogic<SignedTransaction> {
+    private final static Logger logger = LoggerFactory.getLogger(InvoiceOfferFlow.class);
 
-    final InvoiceState invoiceState;
+    final InvoiceOfferState invoiceOfferState;
     private final ProgressTracker.Step SENDING_TRANSACTION = new ProgressTracker.Step("Sending transaction to counterParty");
     private final ProgressTracker.Step GENERATING_TRANSACTION = new ProgressTracker.Step("Generating transaction based on new IOU.");
     private final ProgressTracker.Step VERIFYING_TRANSACTION = new ProgressTracker.Step("Verifying contract constraints.");
     private final ProgressTracker.Step SIGNING_TRANSACTION = new ProgressTracker.Step("Signing transaction with our private key.");
-    private final ProgressTracker.Step GATHERING_SIGS = new ProgressTracker.Step("Gathering the counterparty's signature.") {
+    private final ProgressTracker.Step GATHERING_SIGNATURES = new ProgressTracker.Step("Gathering the counterparty's signature.") {
         @Override
         public ProgressTracker childProgressTracker() {
             logger.info("\uD83C\uDF3A \uD83C\uDF3A ProgressTracker childProgressTracker ...");
@@ -46,7 +48,7 @@ public class OfferInvoiceFlow extends FlowLogic<SignedTransaction> {
             GENERATING_TRANSACTION,
             VERIFYING_TRANSACTION,
             SIGNING_TRANSACTION,
-            GATHERING_SIGS,
+            GATHERING_SIGNATURES,
             FINALISING_TRANSACTION,
             SENDING_TRANSACTION
     );
@@ -56,10 +58,15 @@ public class OfferInvoiceFlow extends FlowLogic<SignedTransaction> {
         return progressTracker;
     }
 
-    public OfferInvoiceFlow(InvoiceState invoiceState) {
-        this.invoiceState = invoiceState;
-        logger.info("\uD83C\uDF3A \uD83C\uDF3A RegisterInvoiceFlow constructor with invoiceState: \uD83C\uDF4F " + invoiceState.getSupplierInfo().getName().toString());
+    public InvoiceOfferFlow(InvoiceOfferState invoiceOfferState) {
+        this.invoiceOfferState = invoiceOfferState;
+        logger.info("\uD83C\uDF3A \uD83C\uDF3A InvoiceOfferFlow constructor with invoiceOfferState supplier: \uD83C\uDF4F "
+                + invoiceOfferState.getSupplier().toString() + "\n investor: ".concat(invoiceOfferState.getInvestor().toString()));
+
     }
+//    public (InvoiceOfferState invoiceOfferState) {
+//        this.invoiceOfferState = invoiceOfferState;
+//    }
 
     @Override
     @Suspendable
@@ -68,18 +75,32 @@ public class OfferInvoiceFlow extends FlowLogic<SignedTransaction> {
         final ServiceHub serviceHub = getServiceHub();
         logger.info(" \uD83E\uDD1F \uD83E\uDD1F  \uD83E\uDD1F \uD83E\uDD1F  ... RegisterInvoiceFlow call started ...");
         Party notary = serviceHub.getNetworkMapCache().getNotaryIdentities().get(0);
-        invoiceState.setDateRegistered(new Date());
 
-        InvoiceContract.Register command = new InvoiceContract.Register();
+        //todo - figure out vaultQuery criteria search
+        List<StateAndRef<InvoiceState>> stateAndRefs = serviceHub.getVaultService().queryBy(InvoiceState.class).getStates();
+        StateAndRef<InvoiceState> invoiceStateStateAndRef = null;
+        for (StateAndRef<InvoiceState> ref: stateAndRefs) {
+            if (ref.getState().getData().getInvoiceId() == invoiceOfferState.getInvoiceId()) {
+                invoiceStateStateAndRef = ref;
+            }
+        }
+
+        if (invoiceStateStateAndRef == null) {
+            throw new IllegalArgumentException("Unable to obtain invoice stateAndRef");
+        }
+        InvoiceOfferContract.MakeOffer command = new InvoiceOfferContract.MakeOffer();
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Notary: " + notary.getName().toString()
-                + "  \uD83C\uDF4A supplierParty: " + invoiceState.getSupplierInfo().getName().toString()
-                + "  \uD83C\uDF4A customerParty: "+ invoiceState.getCustomerInfo().getName().toString() +" \uD83C\uDF4E  invoice: "
-                + invoiceState.getInvoiceNumber().concat("  \uD83D\uDC9A totalAmount") + invoiceState.getTotalAmount());
+                + "  \uD83C\uDF4A supplierParty: " + invoiceOfferState.getSupplier().getName()
+                + "  \uD83C\uDF4A customerParty: "+ invoiceOfferState.getInvestor().getName()
+                +" \uD83C\uDF4E  discount: " + invoiceOfferState.getDiscount()
+                + "  \uD83D\uDC9A offerAmount" + invoiceOfferState.getOfferAmount());
 
         progressTracker.setCurrentStep(GENERATING_TRANSACTION);
-        TransactionBuilder txBuilder = new TransactionBuilder(notary)
-                .addOutputState(invoiceState, InvoiceContract.ID)
-                .addCommand(command, invoiceState.getSupplierInfo().getHost().getOwningKey(),  invoiceState.getCustomerInfo().getHost().getOwningKey());
+        TransactionBuilder txBuilder = new TransactionBuilder(notary);
+        txBuilder.addInputState(invoiceStateStateAndRef);
+        txBuilder.addOutputState(invoiceOfferState, InvoiceOfferContract.ID);
+        txBuilder.addCommand(command, invoiceOfferState.getSupplier().getHost().getOwningKey(),
+                invoiceOfferState.getInvestor().getHost().getOwningKey());
 
         progressTracker.setCurrentStep(VERIFYING_TRANSACTION);
         txBuilder.verify(serviceHub);
@@ -90,18 +111,18 @@ public class OfferInvoiceFlow extends FlowLogic<SignedTransaction> {
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Invoice Register Transaction signInitialTransaction executed ...");
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Transaction signInitialTransaction: ".concat(signedTx.toString()));
 
-        FlowSession customerFlowSession = initiateFlow(invoiceState.getCustomerInfo().getHost());
+        FlowSession investorFlowSession = initiateFlow(invoiceOfferState.getInvestor().getHost());
 
-        progressTracker.setCurrentStep(GATHERING_SIGS);
+        progressTracker.setCurrentStep(GATHERING_SIGNATURES);
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Collecting Signatures ....");
         SignedTransaction signedTransaction = subFlow(
                 new CollectSignaturesFlow(signedTx,
-                        ImmutableList.of(customerFlowSession),
-                        GATHERING_SIGS.childProgressTracker()));
+                        ImmutableList.of(investorFlowSession),
+                        GATHERING_SIGNATURES.childProgressTracker()));
         logger.info(("\uD83C\uDFBD \uD83C\uDFBD \uD83C\uDFBD \uD83C\uDFBD  Signatures collected OK!  \uD83D\uDE21 \uD83D\uDE21 " +
                 "will call FinalityFlow ... \uD83C\uDF3A \uD83C\uDF3A  \uD83C\uDF3A \uD83C\uDF3A : ").concat(signedTransaction.toString()));
 
-        SignedTransaction mSignedTransactionDone = subFlow(new FinalityFlow(signedTransaction, ImmutableList.of(customerFlowSession), FINALISING_TRANSACTION.childProgressTracker()));
+        SignedTransaction mSignedTransactionDone = subFlow(new FinalityFlow(signedTransaction, ImmutableList.of(investorFlowSession), FINALISING_TRANSACTION.childProgressTracker()));
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 FinalityFlow has been executed ... \uD83E\uDD66  are we good? \uD83E\uDD66 ❄️ ❄️ ❄️");
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 returning mSignedTransactionDone:  ❄️ ❄️ : ".concat(mSignedTransactionDone.toString()));
         return mSignedTransactionDone;

@@ -1,8 +1,6 @@
-package com.bfn.flows.bno;
+package com.bfn.flows.admin;
 
 import co.paralleluniverse.fibers.Suspendable;
-import com.bfn.contracts.InvoiceContract;
-import com.bfn.states.InvoiceState;
 import com.google.common.collect.ImmutableList;
 import com.r3.corda.lib.accounts.contracts.AccountInfoContract;
 import com.r3.corda.lib.accounts.contracts.commands.AccountCommand;
@@ -19,8 +17,6 @@ import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Date;
 
 @InitiatingFlow
 @StartableByRPC

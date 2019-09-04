@@ -2,11 +2,10 @@ package com.bfn.webserver;
 
 import com.bfn.dto.AccountInfoDTO;
 import com.bfn.dto.InvoiceDTO;
-import com.bfn.flows.bno.RegisterAccountFlow;
+import com.bfn.flows.admin.RegisterAccountFlow;
 import com.bfn.states.InvoiceState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.r3.corda.lib.accounts.contracts.AccountInfoContract;
 import com.r3.corda.lib.accounts.contracts.states.AccountInfo;
 import net.corda.core.concurrent.CordaFuture;
 import net.corda.core.contracts.StateAndRef;

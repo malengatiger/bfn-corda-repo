@@ -1,4 +1,4 @@
-package com.bfn.flows.bno;
+package com.bfn.flows.admin;
 
 import net.corda.core.node.AppServiceHub;
 import net.corda.core.node.services.CordaService;
