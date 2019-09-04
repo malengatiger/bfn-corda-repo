@@ -101,8 +101,8 @@ public class RegisterAccountFlow extends FlowLogic<AccountInfo> {
         logger.info(" \uD83C\uDF3A  \uD83C\uDF3A  \uD83C\uDF3A returning partyAndCertificate:  \uD83D\uDD11 ".concat(partyAndCertificate.toString()));
 
         SignedTransaction mSignedTransactionDone = subFlow(new FinalityFlow(signedTx, ImmutableList.of(), FINALISING_TRANSACTION.childProgressTracker()));
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 FinalityFlow has been executed ... \uD83E\uDD66  are we good? \uD83E\uDD66 ❄️ ❄️ ❄ trx: ️".concat(mSignedTransactionDone.toString()));
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 returning accountInfo:  ❄️ ❄️ : ".concat(accountInfo.toString()));
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 FinalityFlow has been executed".concat(" :  ").concat(mSignedTransactionDone.toString()));
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 returning accountInfo:: ".concat(accountInfo.toString()));
         return accountInfo;
     }
 }

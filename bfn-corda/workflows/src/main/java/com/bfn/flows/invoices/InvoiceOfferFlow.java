@@ -74,13 +74,15 @@ public class InvoiceOfferFlow extends FlowLogic<SignedTransaction> {
         // We retrieve the notary identity from the network map.
         final ServiceHub serviceHub = getServiceHub();
         logger.info(" \uD83E\uDD1F \uD83E\uDD1F  \uD83E\uDD1F \uD83E\uDD1F  ... RegisterInvoiceFlow call started ...");
+        logger.info("  invoiceOfferState: InvoiceId: ".concat(invoiceOfferState.getInvoiceId().toString()));
         Party notary = serviceHub.getNetworkMapCache().getNotaryIdentities().get(0);
 
         //todo - figure out vaultQuery criteria search
         List<StateAndRef<InvoiceState>> stateAndRefs = serviceHub.getVaultService().queryBy(InvoiceState.class).getStates();
+        logger.info("stateAndRefsFound: " +  stateAndRefs.size());
         StateAndRef<InvoiceState> invoiceStateStateAndRef = null;
         for (StateAndRef<InvoiceState> ref: stateAndRefs) {
-            if (ref.getState().getData().getInvoiceId() == invoiceOfferState.getInvoiceId()) {
+            if (ref.getState().getData().getInvoiceId().toString().equalsIgnoreCase(invoiceOfferState.getInvoiceId().toString())) {
                 invoiceStateStateAndRef = ref;
             }
         }
@@ -123,8 +125,8 @@ public class InvoiceOfferFlow extends FlowLogic<SignedTransaction> {
                 "will call FinalityFlow ... \uD83C\uDF3A \uD83C\uDF3A  \uD83C\uDF3A \uD83C\uDF3A : ").concat(signedTransaction.toString()));
 
         SignedTransaction mSignedTransactionDone = subFlow(new FinalityFlow(signedTransaction, ImmutableList.of(investorFlowSession), FINALISING_TRANSACTION.childProgressTracker()));
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 FinalityFlow has been executed ... \uD83E\uDD66  are we good? \uD83E\uDD66 ❄️ ❄️ ❄️");
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 returning mSignedTransactionDone:  ❄️ ❄️ : ".concat(mSignedTransactionDone.toString()));
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 FinalityFlow has been executed ... \uD83E\uDD66  are we good? \uD83E\uDD66");
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 returning mSignedTransactionDone:: ".concat(mSignedTransactionDone.toString()));
         return mSignedTransactionDone;
     }
 }

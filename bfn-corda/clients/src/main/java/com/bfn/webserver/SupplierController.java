@@ -151,7 +151,11 @@ public class SupplierController {
                     RegisterInvoiceFlow.class, invoiceState).getReturnValue();
 
             SignedTransaction issueTx = signedTransactionCordaFuture.get();
-            logger.info("\uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F flow completed... \uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  \n\uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C  signedTransaction returned: \uD83E\uDD4F " + issueTx.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
+            logger.info("\uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F flow completed... " +
+                    "\uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  " +
+                    "\n\uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C  signedTransaction returned: \uD83E\uDD4F "
+                    + issueTx.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
+            logger.info("\uD83E\uDD4F \uD83E\uDD4F returned invoiceState: \uD83E\uDD4F \uD83E\uDD4F ".concat(GSON.toJson(getDTO(invoiceState))));
             return getDTO(invoiceState);
         } catch (Exception e) {
             if (e.getMessage() != null) {
@@ -162,6 +166,8 @@ public class SupplierController {
         }
     }
 
+    //23/08/2019 23580.00
+    //02/09/2019 19800.00
     @PostMapping(value = "startInvoiceOfferFlow")
     public InvoiceOfferDTO startInvoiceOfferFlow(@RequestBody InvoiceOfferDTO invoiceOffer) throws Exception {
 
@@ -202,7 +208,11 @@ public class SupplierController {
                     InvoiceOfferFlow.class, invoiceOfferState).getReturnValue();
 
             SignedTransaction issueTx = signedTransactionCordaFuture.get();
-            logger.info("\uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F flow completed... \uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  \n\uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C  signedTransaction returned: \uD83E\uDD4F " + issueTx.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
+            logger.info("\uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F flow completed... " +
+                    "\uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  \n\uD83D\uDC4C " +
+                    "\uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C  signedTransaction returned: \uD83E\uDD4F " +
+                    issueTx.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
+            logger.info("\uD83C\uDF3A \uD83C\uDF38 \uD83C\uDF3C  returned invoiceOfferState: ".concat(GSON.toJson(invoiceOfferState)));
             return getDTO(invoiceOfferState);
         } catch (Exception e) {
             if (e.getMessage() != null) {
