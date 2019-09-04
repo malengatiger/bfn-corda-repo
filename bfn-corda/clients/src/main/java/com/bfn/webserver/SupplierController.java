@@ -2,6 +2,7 @@ package com.bfn.webserver;
 
 import com.bfn.dto.AccountInfoDTO;
 import com.bfn.dto.InvoiceDTO;
+import com.bfn.dto.InvoiceOfferDTO;
 import com.bfn.flows.invoices.RegisterInvoiceFlow;
 import com.bfn.states.InvoiceState;
 import com.google.gson.Gson;
@@ -158,6 +159,60 @@ public class SupplierController {
             }
         }
     }
+
+    @PostMapping(value = "startInvoiceOfferFlow")
+    public InvoiceDTO startInvoiceOfferFlow(@RequestBody InvoiceOfferDTO invoice) throws Exception {
+
+        logger.info("Input Parameters; \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F InvoiceOfferDTO: " + GSON.toJson(invoice) + " \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F");
+        try {
+            logger.info("\uD83C\uDF4F SUPPLIER: ".concat(invoice.getSupplierId()).concat("  \uD83D\uDD06  ")
+                    .concat("  \uD83E\uDDE1 CUSTOMER: ").concat(invoice.getInvestorId()));
+
+            List<StateAndRef<AccountInfo>> accounts = proxy.vaultQuery(AccountInfo.class).getStates();
+            logger.info(" \uD83C\uDF4F \uD83C\uDF4F AccountInfo's found by vaultQuery: \uD83D\uDD34 " + accounts.size() + " \uD83D\uDD34 ");
+            AccountInfo supplierInfo = null, investorInfo = null;
+            for (StateAndRef<AccountInfo> info: accounts) {
+                logger.info(" \uD83C\uDF4F \uD83C\uDF4F AccountInfo found: ".concat(info.toString()));
+                if (info.getState().getData().getIdentifier().toString().equalsIgnoreCase(invoice.getInvestorId())) {
+                    investorInfo = info.getState().getData();
+                }
+                if (info.getState().getData().getIdentifier().toString().equalsIgnoreCase(invoice.getSupplierId())) {
+                    supplierInfo = info.getState().getData();
+                }
+            }
+            if (supplierInfo == null) {
+                throw new Exception("Supplier is fucking missing");
+            }
+            if (investorInfo == null) {
+                throw new Exception("Customer is bloody missing");
+            }
+            logger.info("we have names and parties \uD83C\uDF4F");
+            InvoiceState invoiceState = new InvoiceState(
+                    invoice.getInvoiceNumber(),
+                    invoice.getDescription(),
+                    invoice.getAmount(),
+                    invoice.getTotalAmount(),
+                    invoice.getValueAddedTax(),
+                    new Date(proxy.currentNodeTime().toEpochMilli()),
+                    supplierInfo,investorInfo,
+                    UUID.randomUUID());
+
+            logger.info("\uD83C\uDF4F ...... start the flow ...");
+            CordaFuture<SignedTransaction> signedTransactionCordaFuture = proxy.startTrackedFlowDynamic(
+                    RegisterInvoiceFlow.class, invoiceState).getReturnValue();
+
+            SignedTransaction issueTx = signedTransactionCordaFuture.get();
+            logger.info("\uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F flow completed... \uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  \n\uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C  signedTransaction returned: \uD83E\uDD4F " + issueTx.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
+            return getDTO(invoiceState);
+        } catch (Exception e) {
+            if (e.getMessage() != null) {
+                throw new Exception("Failed to register invoice. ".concat(e.getMessage()));
+            } else {
+                throw new Exception("Failed to register invoice. Unknown cause");
+            }
+        }
+    }
+
     @GetMapping(value = "getInvoiceStates")
     public List<InvoiceDTO> getInvoiceStates() {
 
