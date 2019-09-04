@@ -3,7 +3,9 @@ package com.bfn.webserver;
 import com.bfn.dto.AccountInfoDTO;
 import com.bfn.dto.InvoiceDTO;
 import com.bfn.dto.InvoiceOfferDTO;
+import com.bfn.flows.invoices.InvoiceOfferFlow;
 import com.bfn.flows.invoices.RegisterInvoiceFlow;
+import com.bfn.states.InvoiceOfferState;
 import com.bfn.states.InvoiceState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -161,22 +163,22 @@ public class SupplierController {
     }
 
     @PostMapping(value = "startInvoiceOfferFlow")
-    public InvoiceDTO startInvoiceOfferFlow(@RequestBody InvoiceOfferDTO invoice) throws Exception {
+    public InvoiceOfferDTO startInvoiceOfferFlow(@RequestBody InvoiceOfferDTO invoiceOffer) throws Exception {
 
-        logger.info("Input Parameters; \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F InvoiceOfferDTO: " + GSON.toJson(invoice) + " \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F");
+        logger.info("Input Parameters; \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F InvoiceOfferDTO: " + GSON.toJson(invoiceOffer) + " \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F");
         try {
-            logger.info("\uD83C\uDF4F SUPPLIER: ".concat(invoice.getSupplierId()).concat("  \uD83D\uDD06  ")
-                    .concat("  \uD83E\uDDE1 CUSTOMER: ").concat(invoice.getInvestorId()));
+            logger.info("\uD83C\uDF4F SUPPLIER: ".concat(invoiceOffer.getSupplierId()).concat("  \uD83D\uDD06  ")
+                    .concat("  \uD83E\uDDE1 CUSTOMER: ").concat(invoiceOffer.getInvestorId()));
 
             List<StateAndRef<AccountInfo>> accounts = proxy.vaultQuery(AccountInfo.class).getStates();
             logger.info(" \uD83C\uDF4F \uD83C\uDF4F AccountInfo's found by vaultQuery: \uD83D\uDD34 " + accounts.size() + " \uD83D\uDD34 ");
             AccountInfo supplierInfo = null, investorInfo = null;
             for (StateAndRef<AccountInfo> info: accounts) {
                 logger.info(" \uD83C\uDF4F \uD83C\uDF4F AccountInfo found: ".concat(info.toString()));
-                if (info.getState().getData().getIdentifier().toString().equalsIgnoreCase(invoice.getInvestorId())) {
+                if (info.getState().getData().getIdentifier().toString().equalsIgnoreCase(invoiceOffer.getInvestorId())) {
                     investorInfo = info.getState().getData();
                 }
-                if (info.getState().getData().getIdentifier().toString().equalsIgnoreCase(invoice.getSupplierId())) {
+                if (info.getState().getData().getIdentifier().toString().equalsIgnoreCase(invoiceOffer.getSupplierId())) {
                     supplierInfo = info.getState().getData();
                 }
             }
@@ -187,28 +189,26 @@ public class SupplierController {
                 throw new Exception("Customer is bloody missing");
             }
             logger.info("we have names and parties \uD83C\uDF4F");
-            InvoiceState invoiceState = new InvoiceState(
-                    invoice.getInvoiceNumber(),
-                    invoice.getDescription(),
-                    invoice.getAmount(),
-                    invoice.getTotalAmount(),
-                    invoice.getValueAddedTax(),
+            InvoiceOfferState invoiceOfferState = new InvoiceOfferState(
+                    UUID.fromString(invoiceOffer.getInvoiceId()),
+                    invoiceOffer.getOfferAmount(),
+                    invoiceOffer.getDiscount(),
+                    supplierInfo,
+                    investorInfo,
                     new Date(proxy.currentNodeTime().toEpochMilli()),
-                    supplierInfo,investorInfo,
-                    UUID.randomUUID());
-
+                    null);
             logger.info("\uD83C\uDF4F ...... start the flow ...");
             CordaFuture<SignedTransaction> signedTransactionCordaFuture = proxy.startTrackedFlowDynamic(
-                    RegisterInvoiceFlow.class, invoiceState).getReturnValue();
+                    InvoiceOfferFlow.class, invoiceOfferState).getReturnValue();
 
             SignedTransaction issueTx = signedTransactionCordaFuture.get();
             logger.info("\uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F flow completed... \uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  \n\uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C  signedTransaction returned: \uD83E\uDD4F " + issueTx.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
-            return getDTO(invoiceState);
+            return getDTO(invoiceOfferState);
         } catch (Exception e) {
             if (e.getMessage() != null) {
-                throw new Exception("Failed to register invoice. ".concat(e.getMessage()));
+                throw new Exception("Failed to register invoiceOffer. ".concat(e.getMessage()));
             } else {
-                throw new Exception("Failed to register invoice. Unknown cause");
+                throw new Exception("Failed to register invoiceOffer. Unknown cause");
             }
         }
     }
@@ -246,6 +246,21 @@ public class SupplierController {
                 state.getCustomerInfo().getIdentifier().getId().toString());
         invoice.setDateRegistered(state.getDateRegistered());
         return invoice;
+    }
+    private InvoiceOfferDTO getDTO(InvoiceOfferState state) {
+        InvoiceOfferDTO invoiceOffer = new InvoiceOfferDTO(
+                state.getInvoiceId().toString(),
+                state.getOfferAmount(),
+                state.getDiscount(),
+                state.getSupplier().getIdentifier().getId().toString(),
+                state.getInvestor().getIdentifier().getId().toString());
+        if (state.getOfferDate() !=  null) {
+            invoiceOffer.setOfferDate(state.getOfferDate());
+        }
+        if (state.getInvestorDate() !=  null) {
+            invoiceOffer.setInvestorDate(state.getInvestorDate());
+        }
+        return invoiceOffer;
     }
     private class PingResult {
         String message;

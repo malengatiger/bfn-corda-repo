@@ -37,7 +37,7 @@ public class InvoiceOfferContract implements Contract {
             throw new IllegalArgumentException("Only one command allowed");
         }
         Command command = tx.getCommand(0);
-        if (!(command.getValue() instanceof Register)) {
+        if (!(command.getValue() instanceof MakeOffer)) {
             throw new IllegalArgumentException("Only Register command allowed");
         }
         List<PublicKey> requiredSigners = command.getSigners();

@@ -36,15 +36,13 @@ public class RegisterInvoiceFlowResponder extends FlowLogic<SignedTransaction> {
         SignTransactionFlow signTransactionFlow = new SignTransactionFlow(counterPartySession) {
             @Override
             protected void checkTransaction(@NotNull SignedTransaction stx) throws FlowException {
-                logger.info("❄️ checkTransaction: ❄️ ❄️ ❄️ ".concat(stx.toString()));
-                logger.info("❄️ Number of Signatures: ❄️ ❄️ ❄️ " + stx.getSigs().size());
             }
         };
         logger.info("\uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 run subFlow SignTransactionFlow ...");
         subFlow(signTransactionFlow);
         SignedTransaction signedTransaction = subFlow(new ReceiveFinalityFlow(counterPartySession));
-        logger.info("🤟 🤟 🤟 ❤️ \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A \uD83D\uDC99 \uD83D\uDC9C ReceiveFinalityFlow executed \uD83E\uDD1F");
-        logger.info("🤟 🤟 🤟 returning signedTransaction \uD83E\uDD1F \uD83C\uDF4F \uD83C\uDF4E ".concat(signedTransaction.toString()));
+        logger.info("\uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A \uD83D\uDC99 \uD83D\uDC9C ReceiveFinalityFlow executed \uD83E\uDD1F");
+        logger.info("returning signedTransaction \uD83E\uDD1F \uD83C\uDF4F \uD83C\uDF4E ".concat(signedTransaction.toString()));
         return signedTransaction;
 
     }

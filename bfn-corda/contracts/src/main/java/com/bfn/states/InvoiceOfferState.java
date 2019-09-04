@@ -18,10 +18,10 @@ import java.util.UUID;
 @CordaSerializable
 @BelongsToContract(InvoiceOfferContract.class)
 public class InvoiceOfferState implements ContractState {
-    final UUID invoiceId;
-    final double offerAmount, discount;
-    final AccountInfo supplier, investor;
-    final Date offerDate, investorDate;
+    private final UUID invoiceId;
+    private final double offerAmount, discount;
+    private final AccountInfo supplier, investor;
+    private final Date offerDate, investorDate;
 
     public InvoiceOfferState(UUID invoiceId, double offerAmount, double discount,
                              AccountInfo supplier, AccountInfo investor,
