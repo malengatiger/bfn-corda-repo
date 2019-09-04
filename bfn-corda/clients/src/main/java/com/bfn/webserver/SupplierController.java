@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.r3.corda.lib.accounts.contracts.states.AccountInfo;
+import kotlin.collections.EmptySet;
 import net.corda.core.concurrent.CordaFuture;
 import net.corda.core.contracts.ContractState;
 import net.corda.core.contracts.StateAndRef;
@@ -77,10 +78,52 @@ public class SupplierController {
         }
         return GSON.toJson(new PingResult(" \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A List of Nodes", sb.toString()));
     }
+    @GetMapping(value = "/getAccountInfoByID", produces = "application/json")
+    private AccountInfoDTO getAccountInfoByID(@RequestParam String id) throws Exception {
+        //todo - learn how to use criteria or SQL queries
+        try {
+//            QueryCriteria generalCriteria = new VaultQueryCriteria(Vault.StateStatus.ALL);
+//            FieldInfo attributeId = getField("identifier", AccountInfo.class);
+//            logger.info("getField executed: ".concat(attributeId.getName()));
+//            CriteriaExpression criteriaExpression = Builder.equal(attributeId, new UniqueIdentifier(id));
+//
+//
+//            //QueryCriteria queryCriteria = new VaultQueryCriteria(Vault.StateStatus.ALL, ImmutableSet.of(AccountInfo.class));
+//            QueryCriteria queryCriteria = new VaultCustomQueryCriteria<>(criteriaExpression, Vault.StateStatus.ALL, ImmutableSet.of(AccountInfo.class));
+//                    QueryCriteria criteria = generalCriteria.and(queryCriteria);
+            List<StateAndRef<AccountInfo>> results = proxy.vaultQuery(AccountInfo.class).getStates();
+            if (results.size() == 0) {
+                throw new Exception("AccountInfo not found: ".concat(id));
+            }
+            logger.info("\uD83D\uDC99 \uD83D\uDC99 \uD83D\uDC99 AccountInfo's found: " + results.size() + " \uD83D\uDC99");
+            AccountInfo info = null;
+            for (StateAndRef<AccountInfo> ref: results) {
+                if (ref.getState().getData().getIdentifier().getId().toString().equalsIgnoreCase(id)) {
+                    info = ref.getState().getData();
+                }
+            }
+            if (info == null) {
+                throw new Exception(" \uD83E\uDDE1 AccountInfo not found");
+            }
+            AccountInfoDTO dto = new AccountInfoDTO(
+                    info.getIdentifier().getId().toString(),
+                    info.getHost().toString(),
+                    info.getName(), info.getStatus().name());
+            logger.info(" \uD83E\uDDE1  \uD83E\uDDE1 AccountInfo found  \uD83E\uDDE1 ".concat(GSON.toJson(dto)));
+            return dto;
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (e.getMessage() == null) {
+                throw new Exception("getAccountInfoByID encountered unknown error");
+            } else {
+                throw new Exception(e.getMessage());
+            }
+        }
+    }
 
 
     @PostMapping(value = "startRegisterInvoiceFlow")
-    public String startRegisterInvoiceFlow(@RequestBody InvoiceDTO invoice) throws Exception {
+    public InvoiceDTO startRegisterInvoiceFlow(@RequestBody InvoiceDTO invoice) throws Exception {
 
         logger.info("Input Parameters; \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F InvoiceDTO: " + GSON.toJson(invoice) + " \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F");
         try {
@@ -117,13 +160,12 @@ public class SupplierController {
                     UUID.randomUUID());
 
             logger.info("\uD83C\uDF4F ...... start the flow ...");
-            CordaFuture<SignedTransaction> signedTransactionCordaFuture = proxy.startFlowDynamic(
+            CordaFuture<SignedTransaction> signedTransactionCordaFuture = proxy.startTrackedFlowDynamic(
                     RegisterInvoiceFlow.class, invoiceState).getReturnValue();
 
             SignedTransaction issueTx = signedTransactionCordaFuture.get();
             logger.info("\uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F \uD83C\uDF4F flow completed... \uD83C\uDF4F \uD83C\uDF4F \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06  \n\uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C \uD83D\uDC4C  signedTransaction returned: \uD83E\uDD4F " + issueTx.toString().concat(" \uD83E\uDD4F \uD83E\uDD4F "));
-            getInvoiceStates();
-            return issueTx.getId().toString();
+            return getDTO(invoiceState);
         } catch (Exception e) {
             if (e.getMessage() != null) {
                 throw new Exception("Failed to register invoice. ".concat(e.getMessage()));
@@ -132,18 +174,39 @@ public class SupplierController {
             }
         }
     }
-    @PostMapping(value = "getInvoiceStates")
-    public String getInvoiceStates() {
+    @GetMapping(value = "getInvoiceStates")
+    public List<InvoiceDTO> getInvoiceStates() {
 
         List<StateAndRef<InvoiceState>> states = proxy.vaultQuery(InvoiceState.class).getStates();
+        List<InvoiceDTO> list = new ArrayList<>();
         int cnt = 0;
         for (StateAndRef<InvoiceState> ref: states) {
             cnt++;
-            logger.info(" \uD83C\uDF3A InvoiceState: #".concat("" + cnt + " :: ").concat(ref.getState().getData().getSupplierInfo().getName().toString()
+            logger.info(" \uD83C\uDF3A InvoiceState: #".concat("" + cnt + " :: Supplier: ").concat(ref.getState().getData().getSupplierInfo().getName()
+                    .concat("   \uD83D\uDD06  \uD83D\uDD06  Customer: ").concat(ref.getState().getData().getCustomerInfo().getName())
                     .concat(" \uD83E\uDD4F total amount: ").concat(ref.getState().getData().getTotalAmount().toString())
                     .concat(" \uD83E\uDD4F ")));
+            InvoiceState m = ref.getState().getData();
+            list.add(getDTO(m));
         }
-        return "\uD83C\uDF3A  \uD83C\uDF3A done listing states:  \uD83C\uDF3A " + states.size();
+        String m = " \uD83C\uDF3A  \uD83C\uDF3A done listing states:  \uD83C\uDF3A " + list.size();
+        logger.info(GSON.toJson(list));
+
+        return list;
+    }
+
+    private InvoiceDTO getDTO(InvoiceState state) {
+        InvoiceDTO invoice = new InvoiceDTO(
+                state.getInvoiceId().toString(),
+                state.getInvoiceNumber(),
+                state.getDescription(),
+                state.getAmount(),
+                state.getTotalAmount(),
+                state.getValueAddedTax(),
+                state.getSupplierInfo().getIdentifier().getId().toString(),
+                state.getCustomerInfo().getIdentifier().getId().toString());
+        invoice.setDateRegistered(state.getDateRegistered());
+        return invoice;
     }
     private class PingResult {
         String message;

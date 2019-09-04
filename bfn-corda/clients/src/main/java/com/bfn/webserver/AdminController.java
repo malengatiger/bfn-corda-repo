@@ -1,10 +1,12 @@
 package com.bfn.webserver;
 
 import com.bfn.dto.AccountInfoDTO;
+import com.bfn.dto.InvoiceDTO;
 import com.bfn.flows.bno.RegisterAccountFlow;
 import com.bfn.states.InvoiceState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.r3.corda.lib.accounts.contracts.AccountInfoContract;
 import com.r3.corda.lib.accounts.contracts.states.AccountInfo;
 import net.corda.core.concurrent.CordaFuture;
 import net.corda.core.contracts.StateAndRef;
@@ -64,30 +66,54 @@ public class AdminController {
         }
     }
 
-    @PostMapping(value = "getAccounts")
-    public String getAccounts() {
+    @GetMapping(value = "getAccounts")
+    public List<AccountInfoDTO> getAccounts() {
 
         List<StateAndRef<AccountInfo>> accounts = proxy.vaultQuery(AccountInfo.class).getStates();
         int cnt = 0;
+        List<AccountInfoDTO> list = new ArrayList<>();
         for (StateAndRef<AccountInfo> ref: accounts) {
             cnt++;
             logger.info(" \uD83C\uDF3A AccountInfo: #".concat("" + cnt + " :: ").concat(ref.getState().getData().toString()
                     .concat(" \uD83E\uDD4F ")));
+            AccountInfo info = ref.getState().getData();
+            AccountInfoDTO dto = new AccountInfoDTO(info.getIdentifier().getId().toString(),
+                    info.getHost().toString(),info.getName(),info.getStatus().name());
+            list.add(dto);
         }
-        return "\uD83C\uDF3A  \uD83C\uDF3A done listing accounts:  \uD83C\uDF3A " + accounts.size();
+        String msg = "\uD83C\uDF3A  \uD83C\uDF3A done listing accounts:  \uD83C\uDF3A " + list.size();
+        logger.info(GSON.toJson(list));
+        logger.info(msg);
+        return list;
     }
-    @PostMapping(value = "getInvoiceStates")
-    public String getInvoiceStates() {
+    @GetMapping(value = "getInvoiceStates")
+    public List<InvoiceDTO> getInvoiceStates() {
 
         List<StateAndRef<InvoiceState>> states = proxy.vaultQuery(InvoiceState.class).getStates();
+        List<InvoiceDTO> list = new ArrayList<>();
         int cnt = 0;
         for (StateAndRef<InvoiceState> ref: states) {
             cnt++;
-            logger.info(" \uD83C\uDF3A InvoiceState: #".concat("" + cnt + " :: ").concat(ref.getState().getData().getSupplierInfo().getName().toString()
+            logger.info(" \uD83C\uDF3A InvoiceState: #".concat("" + cnt + " :: Supplier: ").concat(ref.getState().getData().getSupplierInfo().getName()
+                    .concat("   \uD83D\uDD06  \uD83D\uDD06  Customer: ").concat(ref.getState().getData().getCustomerInfo().getName())
                     .concat(" \uD83E\uDD4F total amount: ").concat(ref.getState().getData().getTotalAmount().toString())
                     .concat(" \uD83E\uDD4F ")));
+            InvoiceState m = ref.getState().getData();
+            InvoiceDTO invoice = new InvoiceDTO(
+                    m.getInvoiceId().toString(),
+                    m.getInvoiceNumber(),
+                    m.getDescription(),
+                    m.getAmount(),
+                    m.getTotalAmount(),
+                    m.getValueAddedTax(),
+                    m.getSupplierInfo().getIdentifier().getId().toString(),
+                    m.getCustomerInfo().getIdentifier().getId().toString());
+            list.add(invoice);
         }
-        return "\uD83C\uDF3A  \uD83C\uDF3A done listing states:  \uD83C\uDF3A " + states.size();
+        String m = " \uD83C\uDF3A  \uD83C\uDF3A done listing states:  \uD83C\uDF3A " + list.size();
+        logger.info(GSON.toJson(list));
+
+        return list;
     }
 
     @GetMapping(value = "/hello", produces = "text/plain")
