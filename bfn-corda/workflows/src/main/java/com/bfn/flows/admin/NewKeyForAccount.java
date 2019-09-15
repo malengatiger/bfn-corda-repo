@@ -14,7 +14,7 @@ import java.util.UUID;
 @StartableByRPC
 @StartableByService
 public class NewKeyForAccount extends FlowLogic<PartyAndCertificate> {
-    private final static Logger logger = LoggerFactory.getLogger(RegisterAccountFlow.class);
+    private final static Logger logger = LoggerFactory.getLogger(AccountRegistrationFlow.class);
     final UUID accountId;
 
     public NewKeyForAccount(UUID accountId) {

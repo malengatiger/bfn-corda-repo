@@ -8,16 +8,28 @@ import java.util.UUID;
 public class InvoiceOfferDTO {
      String invoiceId;
      double offerAmount, discount;
-     String supplierId, investorId;
+     String supplierId, investorId, ownerId;
      Date offerDate, investorDate;
 
     public InvoiceOfferDTO(String invoiceId, double offerAmount, double discount,
-                           String supplierId, String investorId) {
+                           String supplierId, String investorId, String ownerId) {
         this.invoiceId = invoiceId;
         this.offerAmount = offerAmount;
         this.discount = discount;
         this.supplierId = supplierId;
         this.investorId = investorId;
+        this.ownerId = ownerId;
+    }
+
+    public InvoiceOfferDTO() {
+    }
+
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
     }
 
     public String getInvoiceId() {

@@ -1,7 +1,6 @@
 package com.bfn.contracts;
 
 import com.bfn.states.InvoiceOfferState;
-import com.bfn.states.InvoiceState;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.CommandData;
 import net.corda.core.contracts.Contract;
@@ -27,8 +26,8 @@ public class InvoiceOfferContract implements Contract {
     public void verify(LedgerTransaction tx) throws IllegalArgumentException{
 
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 InvoiceOfferContract: verify starting ..... \uD83E\uDD6C \uD83E\uDD6C ");
-        if (tx.getInputStates().size() != 1) {
-            throw new IllegalArgumentException("Input state is required");
+        if (tx.getInputStates().size() != 0) {
+            throw new IllegalArgumentException("Input state is invalid");
         }
         if (tx.getOutputStates().size() != 1) {
             throw new IllegalArgumentException("One output InvoiceOfferState is required");
@@ -38,7 +37,7 @@ public class InvoiceOfferContract implements Contract {
         }
         Command command = tx.getCommand(0);
         if (!(command.getValue() instanceof MakeOffer)) {
-            throw new IllegalArgumentException("Only Register command allowed");
+            throw new IllegalArgumentException("Only MakeOffer command allowed");
         }
         List<PublicKey> requiredSigners = command.getSigners();
         logger.info(" \uD83D\uDD34  \uD83D\uDD34 Required signers: " + requiredSigners.size());
@@ -53,19 +52,25 @@ public class InvoiceOfferContract implements Contract {
         if (invoiceState.getSupplier() == null) {
             throw new IllegalArgumentException("Supplier is required");
         }
-//        if (invoiceState.getin() == null) {
-//            throw new IllegalArgumentException("Customer is required");
-//        }
+        if (invoiceState.getInvestor() == null) {
+            throw new IllegalArgumentException("Investor is required");
+        }
+        if (invoiceState.getOwner() != null) {
+            throw new IllegalArgumentException("Owner should be null");
+        }
+        if (invoiceState.getOwnerDate() != null) {
+            throw new IllegalArgumentException("OwnerDate should be null");
+        }
         Party party = invoiceState.getSupplier().getHost();
         PublicKey supplierPublicKey = party.getOwningKey();
         if (!requiredSigners.contains(supplierPublicKey)) {
             throw new IllegalArgumentException("Supplier Party must sign");
         }
-//        Party party2 = invoiceState.getCustomerInfo().getHost();
-//        PublicKey customerPublicKey = party2.getOwningKey();
-//        if (!requiredSigners.contains(customerPublicKey)) {
-//            throw new IllegalArgumentException("Customer Party must sign");
-//        }
+        Party party2 = invoiceState.getInvestor().getHost();
+        PublicKey investorPublicKey = party2.getOwningKey();
+        if (!requiredSigners.contains(investorPublicKey)) {
+            throw new IllegalArgumentException("Investor Party must sign");
+        }
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 InvoiceOfferContract: verification done OK! .....\uD83E\uDD1F \uD83E\uDD1F ");
 
     }

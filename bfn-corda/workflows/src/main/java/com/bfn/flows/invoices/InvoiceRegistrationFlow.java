@@ -4,9 +4,7 @@ import co.paralleluniverse.fibers.Suspendable;
 import com.bfn.contracts.InvoiceContract;
 import com.bfn.states.InvoiceState;
 import com.google.common.collect.ImmutableList;
-import com.r3.corda.lib.accounts.workflows.flows.RequestKeyForAccount;
 import net.corda.core.flows.*;
-import net.corda.core.identity.AnonymousParty;
 import net.corda.core.identity.Party;
 import net.corda.core.node.ServiceHub;
 import net.corda.core.transactions.SignedTransaction;
@@ -15,20 +13,19 @@ import net.corda.core.utilities.ProgressTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.PublicKey;
 import java.util.Date;
 
 @InitiatingFlow
 @StartableByRPC
-public class RegisterInvoiceFlow extends FlowLogic<SignedTransaction> {
-    private final static Logger logger = LoggerFactory.getLogger(RegisterInvoiceFlow.class);
+public class InvoiceRegistrationFlow extends FlowLogic<SignedTransaction> {
+    private final static Logger logger = LoggerFactory.getLogger(InvoiceRegistrationFlow.class);
 
     final InvoiceState invoiceState;
     private final ProgressTracker.Step SENDING_TRANSACTION = new ProgressTracker.Step("Sending transaction to counterParty");
     private final ProgressTracker.Step GENERATING_TRANSACTION = new ProgressTracker.Step("Generating transaction based on new IOU.");
     private final ProgressTracker.Step VERIFYING_TRANSACTION = new ProgressTracker.Step("Verifying contract constraints.");
     private final ProgressTracker.Step SIGNING_TRANSACTION = new ProgressTracker.Step("Signing transaction with our private key.");
-    private final ProgressTracker.Step GATHERING_SIGS = new ProgressTracker.Step("Gathering the counterparty's signature.") {
+    private final ProgressTracker.Step GATHERING_SIGNATURES = new ProgressTracker.Step("Gathering the counterparty's signature.") {
         @Override
         public ProgressTracker childProgressTracker() {
             logger.info("\uD83C\uDF3A \uD83C\uDF3A ProgressTracker childProgressTracker ...");
@@ -49,7 +46,7 @@ public class RegisterInvoiceFlow extends FlowLogic<SignedTransaction> {
             GENERATING_TRANSACTION,
             VERIFYING_TRANSACTION,
             SIGNING_TRANSACTION,
-            GATHERING_SIGS,
+            GATHERING_SIGNATURES,
             FINALISING_TRANSACTION,
             SENDING_TRANSACTION
     );
@@ -59,7 +56,7 @@ public class RegisterInvoiceFlow extends FlowLogic<SignedTransaction> {
         return progressTracker;
     }
 
-    public RegisterInvoiceFlow(InvoiceState invoiceState) {
+    public InvoiceRegistrationFlow(InvoiceState invoiceState) {
         this.invoiceState = invoiceState;
         logger.info("\uD83C\uDF3A \uD83C\uDF3A RegisterInvoiceFlow constructor with invoiceState: \uD83C\uDF4F " + invoiceState.getSupplierInfo().getName().toString());
     }
@@ -106,12 +103,12 @@ public class RegisterInvoiceFlow extends FlowLogic<SignedTransaction> {
             return mSignedTransactionDone;
         } else {
             FlowSession customerFlowSession = initiateFlow(customerParty);
-            progressTracker.setCurrentStep(GATHERING_SIGS);
+            progressTracker.setCurrentStep(GATHERING_SIGNATURES);
             logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Collecting Signatures ....");
             SignedTransaction signedTransaction = subFlow(
                     new CollectSignaturesFlow(signedTx,
                             ImmutableList.of(customerFlowSession),
-                            GATHERING_SIGS.childProgressTracker()));
+                            GATHERING_SIGNATURES.childProgressTracker()));
             logger.info(("\uD83C\uDFBD \uD83C\uDFBD \uD83C\uDFBD \uD83C\uDFBD  Signatures collected OK!  \uD83D\uDE21 \uD83D\uDE21 " +
                     ".... will call FinalityFlow ... \uD83C\uDF3A \uD83C\uDF3A  \uD83C\uDF3A \uD83C\uDF3A : ").concat(signedTransaction.toString()));
 

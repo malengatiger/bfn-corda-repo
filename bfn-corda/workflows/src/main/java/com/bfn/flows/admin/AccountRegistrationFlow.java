@@ -20,8 +20,8 @@ import org.slf4j.LoggerFactory;
 
 @InitiatingFlow
 @StartableByRPC
-public class RegisterAccountFlow extends FlowLogic<AccountInfo> {
-    private final static Logger logger = LoggerFactory.getLogger(RegisterAccountFlow.class);
+public class AccountRegistrationFlow extends FlowLogic<AccountInfo> {
+    private final static Logger logger = LoggerFactory.getLogger(AccountRegistrationFlow.class);
 
     final String accountName;
     private final ProgressTracker.Step SENDING_TRANSACTION = new ProgressTracker.Step("Sending transaction to counterParty");
@@ -59,7 +59,7 @@ public class RegisterAccountFlow extends FlowLogic<AccountInfo> {
         return progressTracker;
     }
 
-    public RegisterAccountFlow(String accountName) {
+    public AccountRegistrationFlow(String accountName) {
         this.accountName = accountName;
         logger.info("\uD83C\uDF3A \uD83C\uDF3A RegisterAccountFlow constructor with accountName:: \uD83C\uDF4F " + accountName);
     }

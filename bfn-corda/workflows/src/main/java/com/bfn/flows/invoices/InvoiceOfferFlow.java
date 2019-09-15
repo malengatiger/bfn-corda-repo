@@ -64,9 +64,6 @@ public class InvoiceOfferFlow extends FlowLogic<SignedTransaction> {
                 + invoiceOfferState.getSupplier().toString() + "\n investor: ".concat(invoiceOfferState.getInvestor().toString()));
 
     }
-//    public (InvoiceOfferState invoiceOfferState) {
-//        this.invoiceOfferState = invoiceOfferState;
-//    }
 
     @Override
     @Suspendable
@@ -77,56 +74,68 @@ public class InvoiceOfferFlow extends FlowLogic<SignedTransaction> {
         logger.info("  invoiceOfferState: InvoiceId: ".concat(invoiceOfferState.getInvoiceId().toString()));
         Party notary = serviceHub.getNetworkMapCache().getNotaryIdentities().get(0);
 
-        //todo - figure out vaultQuery criteria search
-        List<StateAndRef<InvoiceState>> stateAndRefs = serviceHub.getVaultService().queryBy(InvoiceState.class).getStates();
-        logger.info("stateAndRefsFound: " +  stateAndRefs.size());
-        StateAndRef<InvoiceState> invoiceStateStateAndRef = null;
-        for (StateAndRef<InvoiceState> ref: stateAndRefs) {
-            if (ref.getState().getData().getInvoiceId().toString().equalsIgnoreCase(invoiceOfferState.getInvoiceId().toString())) {
-                invoiceStateStateAndRef = ref;
-            }
-        }
-
-        if (invoiceStateStateAndRef == null) {
-            throw new IllegalArgumentException("Unable to obtain invoice stateAndRef");
-        }
+//        //todo - figure out vaultQuery criteria search
+//        List<StateAndRef<InvoiceState>> stateAndRefs = serviceHub.getVaultService().queryBy(InvoiceState.class).getStates();
+//        logger.info("\uD83D\uDC99 \uD83D\uDC99 \uD83D\uDC99 \uD83D\uDC99 stateAndRefsFound: " +  stateAndRefs.size());
+//        StateAndRef<InvoiceState> invoiceStateStateAndRef = null;
+//        for (StateAndRef<InvoiceState> ref: stateAndRefs) {
+//            String invoiceId = ref.getState().getData().getInvoiceId().toString();
+//            String invoiceId2 = invoiceOfferState.getInvoiceId().toString();
+//                    logger.info("\uD83D\uDC99 compare: ".concat(invoiceId).concat("\n").concat(invoiceId2));
+//            if (invoiceId.equalsIgnoreCase(invoiceId2)) {
+//                invoiceStateStateAndRef = ref;
+//                logger.info("\uD83E\uDD66 \uD83E\uDD66 \uD83E\uDD66 stateAndRef for invoice found.");
+//            }
+//        }
+//
+//        if (invoiceStateStateAndRef == null) {
+//            throw new IllegalArgumentException("Unable to obtain invoice stateAndRef");
+//        }
         InvoiceOfferContract.MakeOffer command = new InvoiceOfferContract.MakeOffer();
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Notary: " + notary.getName().toString()
                 + "  \uD83C\uDF4A supplierParty: " + invoiceOfferState.getSupplier().getName()
-                + "  \uD83C\uDF4A customerParty: "+ invoiceOfferState.getInvestor().getName()
+                + "  \uD83C\uDF4AinvestorParty: "+ invoiceOfferState.getInvestor().getName()
                 +" \uD83C\uDF4E  discount: " + invoiceOfferState.getDiscount()
                 + "  \uD83D\uDC9A offerAmount" + invoiceOfferState.getOfferAmount());
 
         progressTracker.setCurrentStep(GENERATING_TRANSACTION);
         TransactionBuilder txBuilder = new TransactionBuilder(notary);
-        txBuilder.addInputState(invoiceStateStateAndRef);
         txBuilder.addOutputState(invoiceOfferState, InvoiceOfferContract.ID);
         txBuilder.addCommand(command, invoiceOfferState.getSupplier().getHost().getOwningKey(),
                 invoiceOfferState.getInvestor().getHost().getOwningKey());
 
         progressTracker.setCurrentStep(VERIFYING_TRANSACTION);
         txBuilder.verify(serviceHub);
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Invoice Register TransactionBuilder verified");
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Invoice Offer TransactionBuilder verified");
         // Signing the transaction.
         progressTracker.setCurrentStep(SIGNING_TRANSACTION);
         SignedTransaction signedTx = serviceHub.signInitialTransaction(txBuilder);
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Invoice Register Transaction signInitialTransaction executed ...");
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Invoice Offer Transaction signInitialTransaction executed ...");
         logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Transaction signInitialTransaction: ".concat(signedTx.toString()));
 
-        FlowSession investorFlowSession = initiateFlow(invoiceOfferState.getInvestor().getHost());
+        if (invoiceOfferState.getInvestor().getHost().getName().toString()
+                .equalsIgnoreCase(invoiceOfferState.getSupplier().getHost().getName().toString())) {
+            logger.info(" \uD83C\uDFC0  \uD83C\uDFC0  \uD83C\uDFC0 Supplier and Investor are on the same node. FlowSession not required");
+            SignedTransaction mSignedTransactionDone = subFlow(new FinalityFlow(signedTx, ImmutableList.of(), FINALISING_TRANSACTION.childProgressTracker()));
+            logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 FinalityFlow has been executed ... \uD83E\uDD66  are we good? \uD83E\uDD66");
+            logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 returning mSignedTransactionDone:: ".concat(mSignedTransactionDone.toString()));
+            return mSignedTransactionDone;
+        } else {
+            logger.info(" \uD83C\uDFC0  \uD83C\uDFC0  \uD83C\uDFC0 Supplier and Investor are NOT on the same node. FlowSession is required");
+            FlowSession investorFlowSession = initiateFlow(invoiceOfferState.getInvestor().getHost());
+            progressTracker.setCurrentStep(GATHERING_SIGNATURES);
+            logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Collecting Signatures ....");
+            SignedTransaction signedTransaction = subFlow(
+                    new CollectSignaturesFlow(signedTx,
+                            ImmutableList.of(investorFlowSession),
+                            GATHERING_SIGNATURES.childProgressTracker()));
+            logger.info(("\uD83C\uDFBD \uD83C\uDFBD \uD83C\uDFBD \uD83C\uDFBD  Signatures collected OK!  \uD83D\uDE21 \uD83D\uDE21 " +
+                    "will call FinalityFlow ... \uD83C\uDF3A \uD83C\uDF3A  \uD83C\uDF3A \uD83C\uDF3A : ").concat(signedTransaction.toString()));
 
-        progressTracker.setCurrentStep(GATHERING_SIGNATURES);
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 Collecting Signatures ....");
-        SignedTransaction signedTransaction = subFlow(
-                new CollectSignaturesFlow(signedTx,
-                        ImmutableList.of(investorFlowSession),
-                        GATHERING_SIGNATURES.childProgressTracker()));
-        logger.info(("\uD83C\uDFBD \uD83C\uDFBD \uD83C\uDFBD \uD83C\uDFBD  Signatures collected OK!  \uD83D\uDE21 \uD83D\uDE21 " +
-                "will call FinalityFlow ... \uD83C\uDF3A \uD83C\uDF3A  \uD83C\uDF3A \uD83C\uDF3A : ").concat(signedTransaction.toString()));
-
-        SignedTransaction mSignedTransactionDone = subFlow(new FinalityFlow(signedTransaction, ImmutableList.of(investorFlowSession), FINALISING_TRANSACTION.childProgressTracker()));
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 FinalityFlow has been executed ... \uD83E\uDD66  are we good? \uD83E\uDD66");
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 returning mSignedTransactionDone:: ".concat(mSignedTransactionDone.toString()));
-        return mSignedTransactionDone;
+            SignedTransaction mSignedTransactionDone = subFlow(new FinalityFlow(signedTransaction, ImmutableList.of(investorFlowSession), FINALISING_TRANSACTION.childProgressTracker()));
+            logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 FinalityFlow has been executed ... \uD83E\uDD66  are we good? \uD83E\uDD66");
+            logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 returning mSignedTransactionDone:: ".concat(mSignedTransactionDone.toString()));
+            return mSignedTransactionDone;
+        }
     }
 }
