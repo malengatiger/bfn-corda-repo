@@ -4,11 +4,12 @@ public class DemoSummary {
     int numberOfAccounts, numberOfInvoices, numberOfInvoiceOffers;
     int numberOfNodes, numberOfFlows;
     String started, ended;
+    double elapsedSeconds;
 
     public DemoSummary() {
     }
 
-    public DemoSummary(int numberOfAccounts, int numberOfInvoices, int numberOfInvoiceOffers, int numberOfNodes, int numberOfFlows, String started, String ended) {
+    public DemoSummary(int numberOfAccounts, int numberOfInvoices, int numberOfInvoiceOffers, int numberOfNodes, int numberOfFlows, String started, String ended, double elapsedSeconds) {
         this.numberOfAccounts = numberOfAccounts;
         this.numberOfInvoices = numberOfInvoices;
         this.numberOfInvoiceOffers = numberOfInvoiceOffers;
@@ -16,6 +17,15 @@ public class DemoSummary {
         this.numberOfFlows = numberOfFlows;
         this.started = started;
         this.ended = ended;
+        this.elapsedSeconds = elapsedSeconds;
+    }
+
+    public double getElapsedSeconds() {
+        return elapsedSeconds;
+    }
+
+    public void setElapsedSeconds(double elapsedSeconds) {
+        this.elapsedSeconds = elapsedSeconds;
     }
 
     public String getStarted() {

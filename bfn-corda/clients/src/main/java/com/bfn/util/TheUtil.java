@@ -219,7 +219,7 @@ public class TheUtil {
 
             AccountInfoDTO dto = new AccountInfoDTO();
             dto.setHost(accountInfo.getHost().toString());
-            dto.setIdentifier(accountInfo.getIdentifier().toString());
+            dto.setIdentifier(accountInfo.getIdentifier().getId().toString());
             dto.setName(accountInfo.getName());
             dto.setStatus(accountInfo.getStatus().name());
             return dto;
@@ -304,14 +304,14 @@ public class TheUtil {
         AccountInfo owner = state.getOwner();
         String ownerId = null;
         if (owner != null) {
-            ownerId = owner.getIdentifier().toString();
+            ownerId = owner.getIdentifier().getId().toString();
         }
         InvoiceOfferDTO invoiceOffer = new InvoiceOfferDTO(
                 state.getInvoiceId().toString(),
                 state.getOfferAmount(),
                 state.getDiscount(),
-                state.getSupplier().getIdentifier().toString(),
-                state.getInvestor().getIdentifier().toString(), ownerId );
+                state.getSupplier().getIdentifier().getId().toString(),
+                state.getInvestor().getIdentifier().getId().toString(), ownerId );
 
         if (state.getOfferDate() !=  null) {
             invoiceOffer.setOfferDate(state.getOfferDate());
