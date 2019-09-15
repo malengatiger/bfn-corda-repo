@@ -17,6 +17,9 @@ import net.corda.core.contracts.StateAndRef;
 import net.corda.core.identity.Party;
 import net.corda.core.messaging.CordaRPCOps;
 import net.corda.core.node.NodeInfo;
+import net.corda.core.node.services.Vault;
+import net.corda.core.node.services.vault.PageSpecification;
+import net.corda.core.node.services.vault.QueryCriteria;
 import net.corda.core.transactions.SignedTransaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +48,7 @@ public class TheUtil {
                 dto.getAddresses().add(party.getName().toString());
             }
 
-            logger.info("\uD83C\uDF3A \uD83C\uDF3A BFN Corda Supplier Node: \uD83C\uDF3A "
+            logger.info("\uD83C\uDF3A \uD83C\uDF3A BFN Corda Node: \uD83C\uDF3A "
                     + info.getLegalIdentities().get(0).getName().toString());
             nodeList.add(dto);
         }
@@ -60,29 +63,24 @@ public class TheUtil {
         List<AccountInfoDTO> list = new ArrayList<>();
         for (StateAndRef<AccountInfo> ref: accounts) {
             cnt++;
-            logger.info(" \uD83C\uDF3A AccountInfo: #".concat("" + cnt + " :: ").concat(ref.getState().getData().toString()
-                    .concat(" \uD83E\uDD4F ")));
+//            logger.info(" \uD83C\uDF3A AccountInfo: #".concat("" + cnt + " :: ").concat(ref.getState().getData().toString()
+//                    .concat(" \uD83E\uDD4F ")));
             AccountInfo info = ref.getState().getData();
             AccountInfoDTO dto = new AccountInfoDTO(info.getIdentifier().getId().toString(),
                     info.getHost().toString(),info.getName(),info.getStatus().name());
             list.add(dto);
         }
         String msg = "\uD83C\uDF3A  \uD83C\uDF3A done listing accounts:  \uD83C\uDF3A " + list.size();
-        logger.info(GSON.toJson(list));
         logger.info(msg);
         return list;
     }
     public static List<InvoiceDTO> getInvoiceStates(CordaRPCOps proxy) {
+        QueryCriteria criteria = new QueryCriteria.VaultQueryCriteria(Vault.StateStatus.UNCONSUMED);
+        Vault.Page<InvoiceState> page = proxy.vaultQueryByWithPagingSpec(InvoiceState.class, criteria, new PageSpecification(1,200));
 
-        List<StateAndRef<InvoiceState>> states = proxy.vaultQuery(InvoiceState.class).getStates();
         List<InvoiceDTO> list = new ArrayList<>();
         int cnt = 0;
-        for (StateAndRef<InvoiceState> ref: states) {
-            cnt++;
-            logger.info(" \uD83C\uDF3A InvoiceState: #".concat("" + cnt + " :: Supplier: ").concat(ref.getState().getData().getSupplierInfo().getName()
-                    .concat("   \uD83D\uDD06  \uD83D\uDD06  Customer: ").concat(ref.getState().getData().getCustomerInfo().getName())
-                    .concat(" \uD83E\uDD4F total amount: ").concat(ref.getState().getData().getTotalAmount().toString())
-                    .concat(" \uD83E\uDD4F ")));
+        for (StateAndRef<InvoiceState> ref: page.getStates()) {
             InvoiceState m = ref.getState().getData();
             InvoiceDTO invoice = new InvoiceDTO(
                     m.getInvoiceId().toString(),
@@ -95,33 +93,29 @@ public class TheUtil {
                     m.getCustomerInfo().getIdentifier().getId().toString());
             list.add(invoice);
         }
-        String m = " \uD83C\uDF3A  \uD83C\uDF3A done listing states:  \uD83C\uDF3A " + list.size();
-        logger.info(GSON.toJson(list));
+        String m = " \uD83C\uDF3A  \uD83C\uDF3A  \uD83C\uDF3A  \uD83C\uDF3A done listing InvoiceStates:  \uD83C\uDF3A " + list.size();
 
         return list;
     }
     public static List<InvoiceOfferDTO> getInvoiceOfferStates(CordaRPCOps proxy) {
 
-        List<StateAndRef<InvoiceOfferState>> states = proxy.vaultQuery(InvoiceOfferState.class).getStates();
+        QueryCriteria criteria = new QueryCriteria.VaultQueryCriteria(Vault.StateStatus.UNCONSUMED);
+        Vault.Page<InvoiceOfferState> page = proxy.vaultQueryByWithPagingSpec(InvoiceOfferState.class, criteria, new PageSpecification(1,200));
         List<InvoiceOfferDTO> list = new ArrayList<>();
+
         int cnt = 0;
-        for (StateAndRef<InvoiceOfferState> ref: states) {
-            cnt++;
-            logger.info(" \uD83C\uDF3A InvoiceOfferState: #".concat("" + cnt + " :: Supplier: ").concat(ref.getState().getData().getSupplier().getName()
-                    .concat("   \uD83D\uDD06  \uD83D\uDD06  Investor: ").concat(ref.getState().getData().getInvestor().getName())
-                    .concat(" \uD83E\uDD4F offer amount: " + ref.getState().getData().getOfferAmount() +
-                            " \uD83E\uDD4F ")));
+        for (StateAndRef<InvoiceOfferState> ref: page.getStates()) {
             InvoiceOfferState m = ref.getState().getData();
             InvoiceOfferDTO invoice = new InvoiceOfferDTO(m.getInvoiceId().toString(),
                     m.getOfferAmount(),
                     m.getDiscount(),
-                    m.getSupplier().toString(),
-                    m.getInvestor().toString(), m.getOwner() != null? m.getOwner().toString() : null);
+                    m.getSupplier().getIdentifier().getId().toString(),
+                    m.getInvestor().getIdentifier().getId().toString(),
+                    m.getOwner() != null? m.getOwner().getIdentifier().getId().toString() : null);
             list.add(invoice);
         }
-        String m = " \uD83C\uDF3A  \uD83C\uDF3A done listing states:  \uD83C\uDF3A " + list.size();
+        String m = " \uD83C\uDF3A  \uD83C\uDF3A  \uD83C\uDF3A  \uD83C\uDF3A done listing InvoiceOfferStates:  \uD83C\uDF3A " + list.size();
         logger.info(m);
-
         return list;
     }
     public static List<String> listFlows(CordaRPCOps proxy) {
@@ -131,7 +125,7 @@ public class TheUtil {
         int cnt = 0;
         for (String info: flows) {
             cnt++;
-            logger.info("\uD83E\uDD4F \uD83E\uDD4F #$"+cnt+" \uD83E\uDD6C BFN Corda RegisteredFlow:  \uD83E\uDD4F" + info + "   \uD83C\uDF4E ");
+            logger.info("\uD83E\uDD4F \uD83E\uDD4F #$"+cnt+" \uD83E\uDD6C BFN Corda Flow:  \uD83E\uDD4F" + info + "   \uD83C\uDF4E ");
         }
 
         logger.info("🥬 🥬 🥬 🥬 Total Registered Flows  \uD83C\uDF4E  " + cnt + "  \uD83C\uDF4E \uD83E\uDD6C ");
@@ -158,12 +152,14 @@ public class TheUtil {
             logger.info(" \uD83C\uDF4F \uD83C\uDF4F AccountInfo's found by vaultQuery: \uD83D\uDD34 " + accounts.size() + " \uD83D\uDD34 ");
             AccountInfo supplierInfo = null, customerInfo = null;
             for (StateAndRef<AccountInfo> info: accounts) {
-                logger.info(" \uD83C\uDF4F \uD83C\uDF4F AccountInfo found: ".concat(info.toString()));
+
                 if (info.getState().getData().getIdentifier().toString().equalsIgnoreCase(invoice.getCustomerId())) {
                     customerInfo = info.getState().getData();
+                    logger.info(" \uD83C\uDF4F \uD83C\uDF4F Customer AccountInfo found: ".concat(info.getState().getData().getName()));
                 }
                 if (info.getState().getData().getIdentifier().toString().equalsIgnoreCase(invoice.getSupplierId())) {
                     supplierInfo = info.getState().getData();
+                    logger.info(" \uD83C\uDF4F \uD83C\uDF4F Supplier AccountInfo found: ".concat(info.getState().getData().getName()));
                 }
             }
             if (supplierInfo == null) {
@@ -172,7 +168,6 @@ public class TheUtil {
             if (customerInfo == null) {
                 throw new Exception("Customer is bloody missing");
             }
-            logger.info("we have names and parties \uD83C\uDF4F");
             InvoiceState invoiceState = new InvoiceState(
                     invoice.getInvoiceNumber(),
                     invoice.getDescription(),
@@ -183,7 +178,6 @@ public class TheUtil {
                     supplierInfo,customerInfo,
                     UUID.randomUUID());
 
-            logger.info("\uD83C\uDF4F ...... start the flow ...");
             CordaFuture<SignedTransaction> signedTransactionCordaFuture = proxy.startTrackedFlowDynamic(
                     InvoiceRegistrationFlow.class, invoiceState).getReturnValue();
 
@@ -240,12 +234,14 @@ public class TheUtil {
             logger.info(" \uD83C\uDF4F \uD83C\uDF4F AccountInfo's found by vaultQuery: \uD83D\uDD34 " + accounts.size() + " \uD83D\uDD34 ");
             AccountInfo supplierInfo = null, investorInfo = null;
             for (StateAndRef<AccountInfo> info: accounts) {
-                logger.info(" \uD83C\uDF4F \uD83C\uDF4F AccountInfo found: ".concat(info.toString()));
+
                 if (info.getState().getData().getIdentifier().toString().equalsIgnoreCase(invoiceOffer.getInvestorId())) {
                     investorInfo = info.getState().getData();
+                    logger.info(" \uD83C\uDF4F \uD83C\uDF4F Investor AccountInfo found: ".concat(info.getState().getData().getName()));
                 }
                 if (info.getState().getData().getIdentifier().toString().equalsIgnoreCase(invoiceOffer.getSupplierId())) {
                     supplierInfo = info.getState().getData();
+                    logger.info(" \uD83C\uDF4F \uD83C\uDF4F Supplier AccountInfo found: ".concat(info.getState().getData().getName()));
                 }
             }
             if (supplierInfo == null) {
@@ -254,7 +250,6 @@ public class TheUtil {
             if (investorInfo == null) {
                 throw new Exception("Investor is bloody missing");
             }
-            logger.info("we have names and parties \uD83C\uDF4F we could start the boogie!!");
             invoiceOffer.setOfferDate(new Date());
             InvoiceOfferState invoiceOfferState = new InvoiceOfferState(
                     UUID.fromString(invoiceOffer.getInvoiceId()),
@@ -265,7 +260,6 @@ public class TheUtil {
                     null,
                     new Date(proxy.currentNodeTime().toEpochMilli()),
                     null);
-            logger.info("\uD83C\uDF4F ...... start the flow ...");
             CordaFuture<SignedTransaction> signedTransactionCordaFuture = proxy.startTrackedFlowDynamic(
                     InvoiceOfferFlow.class, invoiceOfferState).getReturnValue();
 

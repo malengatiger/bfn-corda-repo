@@ -39,9 +39,9 @@ public class AdminController {
 
         logger.info("\uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 starting DemoDataGenerator ... \uD83C\uDF4F");
         DemoSummary result = DemoUtil.start(proxy);
-        logger.info("\uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 DemoUtil result: " +
+        logger.info("\n\n\uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 DemoUtil result: " +
                 " \uD83C\uDF4F " + GSON.toJson(result)
-        .concat("\uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A \uD83D\uDC99 \uD83D\uDC9C"));
+        .concat("    \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A \uD83D\uDC99 \uD83D\uDC9C\n\n"));
 
         return result;
     }
