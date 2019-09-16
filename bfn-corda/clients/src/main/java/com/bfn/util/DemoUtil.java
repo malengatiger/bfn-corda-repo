@@ -138,11 +138,13 @@ public class DemoUtil {
 
         InvoiceOfferDTO m = new InvoiceOfferDTO();
         m.setInvoiceId(invoice.getInvoiceId());
+        m.setSupplierId(supplier.getIdentifier());
+        m.setOwnerId(supplier.getIdentifier());
         m.setInvestorId(investor.getIdentifier());
         m.setOfferDate(new Date());
         m.setDiscount(random.nextInt(25) * 1.0);
         m.setOfferAmount(invoice.getTotalAmount() * ((100.0 - m.getDiscount()) / 100));
-        m.setSupplierId(supplier.getIdentifier());
+
 
         TheUtil.startInvoiceOfferFlow(proxy,m);
 

@@ -258,7 +258,7 @@ public class TheUtil {
                     invoiceOffer.getDiscount(),
                     supplierInfo,
                     investorInfo,
-                    null,
+                    supplierInfo,
                     new Date(proxy.currentNodeTime().toEpochMilli()),
                     null);
             CordaFuture<SignedTransaction> signedTransactionCordaFuture = proxy.startTrackedFlowDynamic(

@@ -55,8 +55,8 @@ public class InvoiceOfferContract implements Contract {
         if (invoiceState.getInvestor() == null) {
             throw new IllegalArgumentException("Investor is required");
         }
-        if (invoiceState.getOwner() != null) {
-            throw new IllegalArgumentException("Owner should be null");
+        if (invoiceState.getOwner() == null) {
+            throw new IllegalArgumentException("Owner is required");
         }
         if (invoiceState.getOwnerDate() != null) {
             throw new IllegalArgumentException("OwnerDate should be null");

@@ -1,6 +1,5 @@
 class InvoiceOffer {
   String invoiceId;
-  String invoiceNumber;
   String ownerId;
   String supplierId, investorId, offerDate;
   double offerAmount, discount;
@@ -8,7 +7,6 @@ class InvoiceOffer {
 
   InvoiceOffer(
       this.invoiceId,
-      this.invoiceNumber,
       this.ownerId,
       this.supplierId,
       this.investorId,
@@ -19,7 +17,6 @@ class InvoiceOffer {
 
   InvoiceOffer.fromJson(Map data) {
     this.invoiceId = data['invoiceId'];
-    this.invoiceNumber = data['invoiceNumber'];
     this.ownerId = data['ownerId'];
     this.supplierId = data['supplierId'];
     this.investorId = data['investorId'];
@@ -43,7 +40,6 @@ class InvoiceOffer {
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'invoiceId': invoiceId,
-        'invoiceNumber': invoiceNumber,
         'ownerId': ownerId,
         'supplierId': supplierId,
         'offerAmount': offerAmount,
