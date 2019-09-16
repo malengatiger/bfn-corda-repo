@@ -24,6 +24,16 @@ class Net {
       throw Exception('🍏 🍎 🍐 🍊 Failed to load post');
     }
   }
+  static Future<String> getInvoiceOffers() async {
+    final response = await http.get(URL + 'admin/getInvoiceOfferStates');
+
+    if (response.statusCode == 200) {
+      print('🍏 🍎 🍐 🍊 getInvoiceOffers: Network Response Status Code: 🥬  🥬 ${response.statusCode} 🥬 ');
+      return response.body;
+    } else {
+      throw Exception('🍏 🍎 🍐 🍊 Failed to load post');
+    }
+  }
   static Future<String> ping() async {
     final response = await http.get(URL + 'admin/ping');
 

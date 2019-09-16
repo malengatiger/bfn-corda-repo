@@ -1,10 +1,10 @@
 import 'dart:convert';
-
-import 'package:bfnwebflutter/data/account.dart';
-import 'package:bfnwebflutter/net.dart';
+import 'package:bfnlibrary/data/account.dart';
+import 'package:bfnlibrary/data/invoice.dart';
+import 'package:bfnlibrary/data/invoice_offer.dart';
+import 'package:bfnlibrary/util/net.dart';
 import 'package:flutter/material.dart';
 
-import 'data/invoice.dart';
 
 void main() => runApp(MyApp());
 
@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'BFN WebApp',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -35,6 +35,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   List<AccountInfo> accounts = List();
   List<Invoice> invoices = List();
+  List<InvoiceOffer> invoiceOffers = List();
 
   void _incrementCounter() {
     setState(() {
@@ -44,22 +45,29 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _getNet() async {
+    accounts.clear();
+    invoices.clear();
+
     var ping = await Net.ping();
     print(ping);
 
+    var cnt = 0;
     String result = await Net.getAccounts();
     List map = json.decode(result);
     print('🏈  🏈  🏈  🏈  about to print accounts received from corda ...  🏈  🏈  🏈  🏈 ');
     map.forEach((f) {
+
       accounts.add(AccountInfo.fromJson(f));
     });
     print(
         '🧩 🧩 🧩 🧩 🧩 🧩 🧩  getAccounts found  💜 ${accounts.length}  💜 accounts on corda node  🧩 🧩 🧩 🧩');
     accounts.forEach((acc) {
-      print('🧩 🧩 account: ' + acc.toJson().toString() + " 🧩 ");
+      cnt++;
+      print('🧩 🧩 account: 👽 👽 #$cnt ' + acc.toJson().toString() + " 🧩 ");
     });
     print('🏈  🏈  🏈  🏈  completed printing accounts...  🏈  🏈  🏈  🏈 ');
 
+    cnt = 0;
     String result1 = await Net.getInvoices();
     List map1 = json.decode(result1);
     print('\n\n🏈  🏈  🏈  🏈  about to print invoices received from corda ...  🏈  🏈  🏈  🏈 ');
@@ -67,11 +75,27 @@ class _MyHomePageState extends State<MyHomePage> {
       invoices.add(Invoice.fromJson(f));
     });
     print(
-        '🍎 🍎 🍎 🍎 🍎 🍎 🍎   getInvoices found ${invoices.length} invoices on corda node  🍎 🍎 🍎 🍎 ');
+        '🍎 🍎 🍎 🍎 🍎 🍎 🍎   getInvoices found  💜 ${invoices.length}  💜 invoices on corda node  🍎 🍎 🍎 🍎 ');
     invoices.forEach((acc) {
-      print('🍎 🍎 invoice: ' + acc.toJson().toString() + " 🍎 ");
+      cnt++;
+      print('🍎 🍎 invoice: 🌽 #$cnt ' + acc.toJson().toString() + " 🍎 ");
     });
     print('🏈  🏈  🏈  🏈  completed printing invoices...  🏈  🏈  🏈  🏈 ');
+
+    cnt = 0;
+    String result2 = await Net.getInvoiceOffers();
+    List map2 = json.decode(result2);
+    print('\n\n🏀 🏀 🏀 🏀 🏀  about to print invoiceOffers received from corda ... 🏀 🏀 🏀 🏀 ');
+    map2.forEach((f) {
+      invoiceOffers.add(InvoiceOffer.fromJson(f));
+    });
+    print(
+        '🎽 🎽 🎽 🎽 🎽 🎽 🎽   getInvoiceOffers found  💜 ${invoiceOffers.length}  💜 invoiceOffers on corda node  🎽 🎽 🎽 🎽 ');
+    invoiceOffers.forEach((acc) {
+      cnt++;
+      print('🥦 🥦  invoiceOffer: 🍊 #$cnt ' + acc.toJson().toString() + " 🥦 ");
+    });
+    print('🏀 🏀 🏀 🏀   completed printing invoiceOffers...  🏀 🏀 🏀 🏀 ');
   }
 
   @override
