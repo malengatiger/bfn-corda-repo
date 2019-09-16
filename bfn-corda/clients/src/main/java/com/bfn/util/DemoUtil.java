@@ -3,10 +3,11 @@ package com.bfn.util;
 import com.bfn.dto.AccountInfoDTO;
 import com.bfn.dto.InvoiceDTO;
 import com.bfn.dto.InvoiceOfferDTO;
+import com.bfn.flows.admin.ShareAccountInfoWithAllNodesFlow;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import net.corda.core.concurrent.CordaFuture;
 import net.corda.core.messaging.CordaRPCOps;
-import org.apache.commons.io.output.DemuxOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,10 +87,15 @@ public class DemoUtil {
         investors.add(investor4);
         investors.add(investor5);
 
-        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 registerAccounts complete ...  \uD83D\uDD06 \uD83D\uDD06 added 3 accounts");
+        logger.info(" \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 \uD83D\uDD06 registerAccounts complete ...  \uD83D\uDD06 \uD83D\uDD06 added 15 accounts");
         List<AccountInfoDTO> list = TheUtil.getAccounts(proxy);
-        logger.info(" \uD83C\uDF4E  \uD83C\uDF4E List of Accounts on Node  \uD83C\uDF4E  \uD83C\uDF4E ");
+        logger.info(" \uD83C\uDF4E  \uD83C\uDF4E List of Accounts on Node  \uD83C\uDF4E  \uD83C\uDF4E " + list.size());
         demoSummary.setNumberOfAccounts(list.size());
+
+//        String parm = "SharingAccounts \uD83C\uDF4E ";
+//        CordaFuture<String> future = proxy.startFlowDynamic(
+//                ShareAccountInfoWithAllNodesFlow.class, parm).getReturnValue();
+//        logger.info("\uD83C\uDFC8  \uD83C\uDFC8 SharedAccountInfo flow returned: ".concat(future.get()));
         registerInvoices();
 
     }

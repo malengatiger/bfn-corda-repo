@@ -39,29 +39,29 @@ dependencies {
     task runOCTNetworkOperator(type: JavaExec, dependsOn: assemble) {
         classpath = sourceSets.main.runtimeClasspath
         main = 'com.bfn.webserver.BFNWebApi'
-        args '--server.port=10211', '--config.rpc.host=localhost', '--config.rpc.port=10221', '--config.rpc.username=user1', '--config.rpc.password=test'
+        args '--server.port=10411', '--config.rpc.host=localhost', '--config.rpc.port=10421', '--config.rpc.username=user1', '--config.rpc.password=test'
     }
     task runLondonInvestorServer(type: JavaExec, dependsOn: assemble) {
         classpath = sourceSets.main.runtimeClasspath
         main = 'com.bfn.webserver.BFNWebApi'
-        args '--server.port=10212', '--config.rpc.host=localhost', '--config.rpc.port=10223', '--config.rpc.username=user1', '--config.rpc.password=test'
+        args '--server.port=10412', '--config.rpc.host=localhost', '--config.rpc.port=10423', '--config.rpc.username=user1', '--config.rpc.password=test'
     }
     task runNewYorkInvestorServer(type: JavaExec, dependsOn: assemble) {
         classpath = sourceSets.main.runtimeClasspath
         main = 'com.bfn.webserver.BFNWebApi'
-        args '--server.port=10213', '--config.rpc.host=localhost', '--config.rpc.port=10225', '--config.rpc.username=user1', '--config.rpc.password=test'
+        args '--server.port=10413', '--config.rpc.host=localhost', '--config.rpc.port=10425', '--config.rpc.username=user1', '--config.rpc.password=test'
     }
 
     task runCapeTownCustomerServer(type: JavaExec, dependsOn: assemble) {
         classpath = sourceSets.main.runtimeClasspath
         main = 'com.bfn.webserver.BFNWebApi'
-        args '--server.port=10214', '--config.rpc.host=localhost', '--config.rpc.port=10227', '--config.rpc.username=user1', '--config.rpc.password=test'
+        args '--server.port=10414', '--config.rpc.host=localhost', '--config.rpc.port=10427', '--config.rpc.username=user1', '--config.rpc.password=test'
     }
 
     task runRegulatorServer(type: JavaExec, dependsOn: assemble) {
         classpath = sourceSets.main.runtimeClasspath
         main = 'com.bfn.webserver.BFNWebApi'
-        args '--server.port=10216', '--config.rpc.host=localhost', '--config.rpc.port=10229', '--config.rpc.username=user1', '--config.rpc.password=test'
+        args '--server.port=10416', '--config.rpc.host=localhost', '--config.rpc.port=10429', '--config.rpc.username=user1', '--config.rpc.password=test'
     }
 
 

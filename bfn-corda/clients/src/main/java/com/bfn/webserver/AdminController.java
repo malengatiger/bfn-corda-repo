@@ -9,6 +9,7 @@ import com.bfn.util.DemoUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.corda.core.messaging.CordaRPCOps;
+import net.corda.core.node.NetworkParameters;
 import net.corda.core.node.NodeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ public class AdminController {
         DemoSummary result = DemoUtil.start(proxy);
         logger.info("\n\n\uD83D\uDD35 \uD83D\uDD35 \uD83D\uDD35 DemoUtil result: " +
                 " \uD83C\uDF4F " + GSON.toJson(result)
-        .concat("    \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A \uD83D\uDC99 \uD83D\uDC9C\n\n"));
+                .concat("    \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A \uD83D\uDC99 \uD83D\uDC9C\n\n"));
 
         return result;
     }
@@ -49,7 +50,7 @@ public class AdminController {
     @PostMapping(value = "/startAccountRegistrationFlow", produces = "application/json")
     private AccountInfoDTO startAccountRegistrationFlow(@RequestParam String accountName) throws ExecutionException, InterruptedException {
 
-        AccountInfoDTO accountInfoDTO = TheUtil.startAccountRegistrationFlow(proxy,accountName);
+        AccountInfoDTO accountInfoDTO = TheUtil.startAccountRegistrationFlow(proxy, accountName);
         getAccounts();
         return accountInfoDTO;
     }
@@ -79,17 +80,20 @@ public class AdminController {
     private String ping() {
         String msg = "\uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A AdminController:BFN Web API pinged: " + new Date().toString()
                 + " \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A";
+        logger.info(msg);
+        NodeInfo nodeInfo = proxy.nodeInfo();
+        logger.info("\uD83E\uDDA0 \uD83E\uDDA0 \uD83E\uDDA0 node pinged: "
+                + nodeInfo.getLegalIdentities().get(0).getName().toString()
+                + proxy.getNetworkParameters().toString() + " \uD83E\uDDA0 \uD83E\uDDA0 \uD83E\uDDA0 ");
 
-        logger.info("\uD83E\uDDA0 \uD83E\uDDA0 \uD83E\uDDA0 " + proxy.getNetworkParameters().toString() + " \uD83E\uDDA0 \uD83E\uDDA0 \uD83E\uDDA0 ");
-        PingResult pingResult = new PingResult(msg, proxy.nodeInfo().toString());
-        logger.info("\uD83C\uDF3A AdminController: node pinged: \uD83C\uDF3A  \uD83E\uDDE9\uD83E\uDDE9\uD83E\uDDE9 : " + proxy.nodeInfo().getLegalIdentities().get(0).getName().toString() + " \uD83E\uDDE9");
-
-        List<NodeInfo> nodes = proxy.networkMapSnapshot();
-        return GSON.toJson(pingResult);
+        return "\uD83C\uDF3A \uD83C\uDF3A \uD83C\uDF3A \uD83C\uDF3A  AdminController: node pinged: " +
+                nodeInfo.getLegalIdentities().get(0).getName().toString() +
+                " \uD83C\uDF3A \uD83C\uDF3A \uD83C\uDF3A \uD83C\uDF3A " +
+                proxy.getNetworkParameters().toString();
     }
 
     @GetMapping(value = "/nodes", produces = "application/json")
-    private List<NodeInfoDTO>  listNodes() {
+    private List<NodeInfoDTO> listNodes() {
 
         return TheUtil.listNodes(proxy);
     }
